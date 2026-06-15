@@ -1,12 +1,21 @@
 import { API_BASE_URL } from "./config";
 
 export async function getExtensionToken() {
-  const stored = await chrome.storage.local.get(["extensionToken"]);
-  return typeof stored.extensionToken === "string" ? stored.extensionToken : null;
+  const stored = await chrome.storage.local.get(["extensionToken", "extensionTokenExpiresAt"]);
+  if (typeof stored.extensionToken !== "string") return null;
+  if (typeof stored.extensionTokenExpiresAt === "string" && Date.parse(stored.extensionTokenExpiresAt) <= Date.now()) {
+    await clearExtensionToken();
+    return null;
+  }
+  return stored.extensionToken;
 }
 
 export async function setExtensionToken(token: string, expiresAt?: string) {
   await chrome.storage.local.set({ extensionToken: token, extensionTokenExpiresAt: expiresAt ?? null });
+}
+
+export async function clearExtensionToken() {
+  await chrome.storage.local.remove(["extensionToken", "extensionTokenExpiresAt", "preferences", "credentials"]);
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -28,6 +37,14 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 }
 
 export async function loadStartupState() {
+  const token = await getExtensionToken();
+  if (!token) {
+    await chrome.storage.local.set({ preferences: null, credentials: null, lastSyncedAt: new Date().toISOString() });
+    const catalog = await apiFetch<any>("/api/models/catalog").catch(() => null);
+    if (catalog) await chrome.storage.local.set({ catalog });
+    return { preferences: null, credentials: null, catalog };
+  }
+
   const [preferences, credentials, catalog] = await Promise.all([
     apiFetch<any>("/api/voice/preferences").catch(() => null),
     apiFetch<any>("/api/settings/model-credentials").catch(() => null),

@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const steps = [
-  "Build the extension with npm run build:extension.",
+  "Build with $env:VITE_JOBLENS_API_BASE_URL=\"https://joblenswithai.vercel.app\" then npm run build:extension.",
   "Open chrome://extensions and enable Developer mode.",
   "Click Load unpacked and select apps/extension/dist.",
   "Pin JobLens Voice to the toolbar.",

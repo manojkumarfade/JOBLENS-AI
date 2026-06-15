@@ -8,7 +8,8 @@ export async function ensureProfile(user: { id: string; email?: string | null; f
       {
         id: user.id,
         email: user.email ?? "",
-        full_name: user.fullName ?? null
+        full_name: user.fullName ?? null,
+        display_name: user.fullName ?? null
       },
       { onConflict: "id", ignoreDuplicates: false }
     )
@@ -20,7 +21,11 @@ export async function ensureProfile(user: { id: string; email?: string | null; f
 
 export async function getProfile(userId: string) {
   const supabase = createSupabaseServiceClient();
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).maybeSingle();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id,full_name,display_name,username,email,avatar_url,plan,created_at")
+    .eq("id", userId)
+    .maybeSingle();
   if (error) throw error;
   return data;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import type { BrainModelCatalogItem, VoiceModelCatalogItem } from "@joblens/shared";
+import type { BrainModelCatalogItem } from "@joblens/shared";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 
@@ -13,7 +13,7 @@ export function ModelPicker({
 }: {
   label: string;
   value: string;
-  models: Array<BrainModelCatalogItem | VoiceModelCatalogItem>;
+  models: BrainModelCatalogItem[];
   disabled?: boolean;
   onChange: (value: string) => void;
 }) {

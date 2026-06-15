@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Upload } from "lucide-react";
+import { Trash2, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,8 @@ export function ResumeUploadCard() {
   const [resumes, setResumes] = useState<ResumeView[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -45,9 +47,21 @@ export function ResumeUploadCard() {
   }
 
   async function setActive(id: string) {
+    setActiveId(id);
     const res = await fetch(`/api/resumes/${id}/active`, { method: "POST" });
     setMessage(res.ok ? "Active resume updated." : "Could not update active resume.");
     if (res.ok) await load();
+    setActiveId(null);
+  }
+
+  async function deleteResume(id: string) {
+    if (!confirm("Delete this resume and its stored file?")) return;
+    setDeletingId(id);
+    const res = await fetch(`/api/resumes/${id}`, { method: "DELETE" });
+    const data = await res.json().catch(() => null);
+    setMessage(res.ok ? "Resume deleted." : data?.error?.message ?? "Could not delete resume.");
+    if (res.ok) await load();
+    setDeletingId(null);
   }
 
   return (
@@ -77,7 +91,12 @@ export function ResumeUploadCard() {
                   <CardTitle className="text-base">{resume.original_filename}</CardTitle>
                   <p className="mt-1 text-sm text-muted-foreground">Experience level: {resume.experience_level ?? "unknown"}</p>
                 </div>
-                {resume.is_active ? <Badge>Active</Badge> : <Button variant="outline" onClick={() => setActive(resume.id)}>Make active</Button>}
+                <div className="flex flex-wrap items-center gap-2">
+                  {resume.is_active ? <Badge>Active</Badge> : <Button variant="outline" onClick={() => setActive(resume.id)} disabled={activeId === resume.id}>{activeId === resume.id ? "Updating..." : "Make active"}</Button>}
+                  <Button variant="outline" onClick={() => deleteResume(resume.id)} disabled={deletingId === resume.id}>
+                    <Trash2 className="h-4 w-4" /> {deletingId === resume.id ? "Deleting..." : "Delete"}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex flex-wrap gap-2">

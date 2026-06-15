@@ -15,7 +15,7 @@ export default async function BillingPage() {
         <h1 className="text-3xl font-semibold">Billing</h1>
         <p className="mt-2 text-muted-foreground">Manage your plan, renewal state, and BYOK shortcut.</p>
       </div>
-      <BillingClient plan={data?.plan ?? "free"} renewalDate={data?.current_period_end ?? null} />
+      <BillingClient plan={data?.plan ?? "free"} renewalDate={data?.current_period_end ?? null} portalUrl={data?.portal_url ?? null} />
     </div>
   );
 }

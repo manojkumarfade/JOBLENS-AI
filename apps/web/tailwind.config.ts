@@ -40,6 +40,11 @@ const config: Config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))"
+        },
+        "panel-dark": {
+          DEFAULT: "hsl(var(--panel-dark))",
+          foreground: "hsl(var(--panel-dark-foreground))",
+          muted: "hsl(var(--panel-dark-muted))"
         }
       },
       borderRadius: {
@@ -48,8 +53,23 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)"
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "Inter", "ui-sans-serif", "system-ui"],
-        serif: ["var(--font-serif)", "Lora", "Georgia", "serif"]
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui"],
+        display: ["var(--font-display)", "var(--font-sans)", "ui-sans-serif", "system-ui"],
+        serif: ["var(--font-serif)", "Georgia", "serif"]
+      },
+      keyframes: {
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" }
+        },
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(18px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" }
+        }
+      },
+      animation: {
+        float: "float 6s ease-in-out infinite",
+        "fade-up": "fade-up 700ms ease forwards"
       }
     }
   },

@@ -10,7 +10,7 @@ export const apiErrorSchema = z.object({
 });
 
 export const voicePreferencesPatchSchema = z.object({
-  defaultVoiceMode: z.enum(["auto", "web_speech", "livekit_gemini"]).optional(),
+  defaultVoiceMode: z.literal("web_speech").optional(),
   languageCode: z.string().min(2).max(20).optional(),
   autoFallbackEnabled: z.boolean().optional(),
   speechRate: z.number().min(0.5).max(2).optional(),
@@ -19,19 +19,13 @@ export const voicePreferencesPatchSchema = z.object({
 });
 
 export const modelCredentialsPatchSchema = z.object({
-  brainProvider: z.enum(["platform", "typegpt", "gemini"]).optional(),
+  brainProvider: z.enum(["platform", "typegpt"]).optional(),
   brainModel: z.string().optional(),
-  voiceModel: z.string().optional(),
-  typegptApiKey: z.string().nullable().optional(),
-  googleApiKey: z.string().nullable().optional(),
-  useOwnLiveKit: z.boolean().optional(),
-  liveKitUrl: z.string().nullable().optional(),
-  liveKitApiKey: z.string().nullable().optional(),
-  liveKitApiSecret: z.string().nullable().optional()
+  typegptApiKey: z.string().nullable().optional()
 });
 
 export const webSpeechAskSchema = z.object({
-  page: pageContextSchema.pick({ url: true, title: true, text: true }).extend({
+  page: pageContextSchema.pick({ url: true, title: true, sourceType: true, text: true, likelyJobTitle: true, likelyCompany: true, confidence: true }).extend({
     headings: z.array(z.string()).optional()
   }),
   question: z.string().min(1).max(1000),

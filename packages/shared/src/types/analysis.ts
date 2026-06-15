@@ -32,6 +32,6 @@ export interface JobAnalysisRecord {
   recommendedActions?: string[];
   applyRecommendation?: "apply" | "maybe" | "skip" | null;
   tailoredBullets?: string[];
-  source?: "web_speech" | "livekit" | "manual";
+  source?: "web_speech" | "manual";
   createdAt?: string;
 }

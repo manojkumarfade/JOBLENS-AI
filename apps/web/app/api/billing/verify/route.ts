@@ -31,6 +31,7 @@ export async function POST(request: Request) {
           plan: "pro",
           status: "active",
           razorpay_subscription_id: body.razorpayPaymentId,
+          portal_url: null,
           current_period_end: currentPeriodEnd.toISOString()
         },
         { onConflict: "user_id" }

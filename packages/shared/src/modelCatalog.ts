@@ -1,22 +1,13 @@
-export type ModelProvider = "platform" | "typegpt" | "gemini";
+export type ModelProvider = "platform" | "typegpt";
 export type ModelSpeedTier = "fast" | "balanced" | "quality";
-export type RequiredApiKey = "typegpt" | "google" | null;
+export type RequiredApiKey = "typegpt" | null;
 
 export interface BrainModelCatalogItem {
   id: string;
   label: string;
-  provider: Exclude<ModelProvider, "platform">;
+  provider: "typegpt";
   speedTier: ModelSpeedTier;
-  requiresApiKey: Exclude<RequiredApiKey, null>;
-  description: string;
-}
-
-export interface VoiceModelCatalogItem {
-  id: string;
-  label: string;
-  provider: "gemini";
-  speedTier: ModelSpeedTier;
-  requiresApiKey: "google";
+  requiresApiKey: "typegpt";
   description: string;
 }
 
@@ -54,46 +45,15 @@ export const brainModels: BrainModelCatalogItem[] = [
     speedTier: "balanced",
     requiresApiKey: "typegpt",
     description: "Strong reasoning model. Recommended for resume tailoring and eligibility analysis."
-  },
-  {
-    id: "gemini-2.5-flash",
-    label: "Gemini 2.5 Flash",
-    provider: "gemini",
-    speedTier: "fast",
-    requiresApiKey: "google",
-    description: "Default brain model for Web Speech answers and job summaries."
-  },
-  {
-    id: "gemini-2.5-pro",
-    label: "Gemini 2.5 Pro",
-    provider: "gemini",
-    speedTier: "quality",
-    requiresApiKey: "google",
-    description: "Higher-accuracy reasoning for resume tailoring and deep comparisons."
   }
 ];
 
-export const voiceModels: VoiceModelCatalogItem[] = [
-  {
-    id: "gemini-2.0-flash-live",
-    label: "Gemini 2.0 Flash Live",
-    provider: "gemini",
-    speedTier: "fast",
-    requiresApiKey: "google",
-    description: "Realtime audio model for Natural Call Voice. Used only via LiveKit agent."
-  }
-];
-
-export const modelCatalog = { brainModels, voiceModels };
+export const modelCatalog = { brainModels };
 
 export function getBrainModel(id: string) {
   return brainModels.find((model) => model.id === id);
 }
 
-export function getVoiceModel(id: string) {
-  return voiceModels.find((model) => model.id === id);
-}
-
 export function getModelLabel(id: string) {
-  return getBrainModel(id)?.label ?? getVoiceModel(id)?.label ?? id;
+  return getBrainModel(id)?.label ?? id;
 }

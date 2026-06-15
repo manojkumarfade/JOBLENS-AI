@@ -7,6 +7,7 @@ import { getAuthenticatedUser } from "@/lib/auth/session";
 import { activeResume, resumeSummary } from "@/lib/data/resumes";
 import { jobAnalysisPrompt, globalSystemPrompt, resumeComparisonPrompt } from "@/lib/prompts/templates";
 import { sanitizeHeadings, sanitizeJobText } from "@/lib/security/sanitize";
+import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 const schema = z.object({
   page: pageContextSchema.pick({ url: true, title: true, text: true }).extend({
@@ -19,6 +20,14 @@ export async function POST(request: Request) {
   try {
     const user = await getAuthenticatedUser(request);
     if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to analyze jobs.", 401);
+    const supabase = createSupabaseServiceClient();
+    const { data: memoryRow } = await supabase
+      .from("user_ai_memory")
+      .select("memory_text")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const userMemory = memoryRow?.memory_text?.trim() ?? "";
+    const memoryBlock = userMemory ? `\n\n## User memory (context about this user, provided by them)\n${userMemory}` : "";
     const body = schema.parse(await readJson(request));
     const page = {
       ...body.page,
@@ -27,13 +36,13 @@ export async function POST(request: Request) {
     };
 
     const summaryCall = await callBrainModel(user.id, [
-      { role: "system", content: globalSystemPrompt },
+      { role: "system", content: `${globalSystemPrompt}${memoryBlock}` },
       { role: "user", content: jobAnalysisPrompt(page) }
     ]);
     const summary = await parseModelJson(summaryCall.answer, jobSummarySchema, async () => {
       return (
         await callBrainModel(user.id, [
-          { role: "system", content: globalSystemPrompt },
+          { role: "system", content: `${globalSystemPrompt}${memoryBlock}` },
           { role: "user", content: `${jobAnalysisPrompt(page)}\n\nReturn valid JSON only.` }
         ])
       ).answer;
@@ -43,7 +52,7 @@ export async function POST(request: Request) {
     let comparison = null;
     if (resume) {
       const compareCall = await callBrainModel(user.id, [
-        { role: "system", content: globalSystemPrompt },
+        { role: "system", content: `${globalSystemPrompt}${memoryBlock}` },
         { role: "user", content: resumeComparisonPrompt({ jobSummaryJson: summary, resumeSummaryJson: resumeSummary(resume) }) }
       ]);
       comparison = await parseModelJson(compareCall.answer, resumeComparisonSchema);

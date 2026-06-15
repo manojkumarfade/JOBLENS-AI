@@ -14,7 +14,6 @@ export function ModelProviderSelector({
     <Select value={value} onChange={(event) => onChange(event.target.value as ModelProvider)}>
       <option value="platform">Platform Default</option>
       <option value="typegpt">TypeGPT</option>
-      <option value="gemini">Gemini</option>
     </Select>
   );
 }

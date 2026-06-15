@@ -2,13 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { CredentialStatus, ModelProvider, VoicePreferences } from "@joblens/shared";
-import { getModelLabel, modelCatalog, voiceModels } from "@joblens/shared";
+import { getModelLabel, modelCatalog } from "@joblens/shared";
 import { ApiKeyField } from "@/components/voice/ApiKeyField";
-import { LiveKitConnectionTester } from "@/components/voice/LiveKitConnectionTester";
-import { LiveKitCredentialsForm } from "@/components/voice/LiveKitCredentialsForm";
 import { ModelPicker } from "@/components/voice/ModelPicker";
 import { ModelProviderSelector } from "@/components/voice/ModelProviderSelector";
-import { VoiceModeSelector } from "@/components/voice/VoiceModeSelector";
 import { WebSpeechTester } from "@/components/voice/WebSpeechTester";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +18,7 @@ export function VoiceSettingsForm() {
   const [preferences, setPreferences] = useState<VoicePreferences | null>(null);
   const [credentials, setCredentials] = useState<CredentialStatus | null>(null);
   const [catalog, setCatalog] = useState(modelCatalog);
-  const [keys, setKeys] = useState({ typegptApiKey: "", googleApiKey: "", liveKitApiKey: "", liveKitApiSecret: "" });
+  const [typegptApiKey, setTypegptApiKey] = useState("");
   const [message, setMessage] = useState("");
 
   async function load() {
@@ -36,7 +33,6 @@ export function VoiceSettingsForm() {
   }
 
   useEffect(() => {
-    // Initial client-side fetch after auth-protected dashboard render.
     void load();
   }, []);
 
@@ -46,6 +42,8 @@ export function VoiceSettingsForm() {
   }, [catalog.brainModels, credentials]);
 
   if (!preferences || !credentials) return <Skeleton className="h-96" />;
+  const currentPreferences = preferences;
+  const currentCredentials = credentials;
 
   async function save() {
     setMessage("Saving settings...");
@@ -53,21 +51,22 @@ export function VoiceSettingsForm() {
       fetch("/api/voice/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(preferences)
+        body: JSON.stringify({ ...currentPreferences, defaultVoiceMode: "web_speech" })
       }),
       fetch("/api/settings/model-credentials", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...credentials,
-          ...Object.fromEntries(Object.entries(keys).filter(([, value]) => value !== ""))
+          brainProvider: currentCredentials.brainProvider,
+          brainModel: currentCredentials.brainModel,
+          ...(typegptApiKey !== "" ? { typegptApiKey } : {})
         })
       })
     ]);
     const credsBody = await credsRes.json().catch(() => null);
     if (prefsRes.ok && credsRes.ok) {
       setCredentials(credsBody.credentials);
-      setKeys({ typegptApiKey: "", googleApiKey: "", liveKitApiKey: "", liveKitApiSecret: "" });
+      setTypegptApiKey("");
       setMessage("Settings saved.");
       await load();
     } else {
@@ -75,16 +74,15 @@ export function VoiceSettingsForm() {
     }
   }
 
-  async function testKey(provider: "typegpt" | "gemini") {
-    const apiKey = provider === "typegpt" ? keys.typegptApiKey : keys.googleApiKey;
-    if (!apiKey) {
+  async function testKey() {
+    if (!typegptApiKey) {
       setMessage("Enter a new key first.");
       return;
     }
     const res = await fetch("/api/settings/model-credentials/test", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider, apiKey })
+      body: JSON.stringify({ provider: "typegpt", apiKey: typegptApiKey })
     });
     const body = await res.json();
     setMessage(res.ok ? "API key test succeeded." : body.error?.message ?? "API key test failed.");
@@ -103,69 +101,63 @@ export function VoiceSettingsForm() {
   return (
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-4 text-sm">
-        <span className="font-medium">Active:</span> {preferences.liveKitConfigAvailable && preferences.defaultVoiceMode !== "web_speech" ? "Natural Call Voice" : "Fast & Free Voice"} · Voice model: {getModelLabel(credentials.voiceModel)} · Brain: {credentials.brainProvider === "platform" ? "Platform Default" : getModelLabel(credentials.brainModel)}{credentials.typegptKeyConfigured || credentials.googleKeyConfigured ? " (your key available)" : ""}
+        <span className="font-medium">Active:</span> Voice Conversation · Brain:{" "}
+        {currentCredentials.brainProvider === "platform" ? "Platform Default" : getModelLabel(currentCredentials.brainModel)}
+        {currentCredentials.typegptKeyConfigured ? " (your TypeGPT key available)" : ""}
       </div>
-
-      <Card>
-        <CardHeader><CardTitle>Voice Mode</CardTitle></CardHeader>
-        <CardContent>
-          <VoiceModeSelector value={preferences.defaultVoiceMode} liveKitAvailable={Boolean(preferences.liveKitConfigAvailable)} onChange={(defaultVoiceMode) => setPreferences({ ...preferences, defaultVoiceMode })} />
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader><CardTitle>Brain Model</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <ModelProviderSelector value={credentials.brainProvider} onChange={(brainProvider: ModelProvider) => setCredentials({ ...credentials, brainProvider, brainModel: brainProvider === "gemini" ? "gemini-2.5-flash" : brainProvider === "typegpt" ? "openai/gpt-oss-20b" : credentials.brainModel })} />
-          {credentials.brainProvider !== "platform" ? (
-            <ModelPicker label="Model" value={credentials.brainModel} models={providerModels} onChange={(brainModel) => setCredentials({ ...credentials, brainModel })} />
+          <ModelProviderSelector
+            value={currentCredentials.brainProvider}
+            onChange={(brainProvider: ModelProvider) =>
+              setCredentials({
+                ...currentCredentials,
+                brainProvider,
+                brainModel: brainProvider === "typegpt" ? "openai/gpt-oss-20b" : currentCredentials.brainModel
+              })
+            }
+          />
+          {currentCredentials.brainProvider !== "platform" ? (
+            <ModelPicker
+              label="Model"
+              value={currentCredentials.brainModel}
+              models={providerModels}
+              onChange={(brainModel) => setCredentials({ ...currentCredentials, brainModel })}
+            />
           ) : (
-            <p className="rounded-md border bg-muted p-3 text-sm text-muted-foreground">Platform Default uses the server-configured fallback model.</p>
+            <p className="rounded-md border bg-muted p-3 text-sm text-muted-foreground">
+              Platform Default uses the server-configured TypeGPT fallback model.
+            </p>
           )}
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>AI & API Keys</CardTitle></CardHeader>
+        <CardHeader><CardTitle>AI & API Key</CardTitle></CardHeader>
         <CardContent className="space-y-5">
-          <ApiKeyField label="TypeGPT API Key" configured={credentials.typegptKeyConfigured} value={keys.typegptApiKey} onChange={(typegptApiKey) => setKeys({ ...keys, typegptApiKey })} onRemove={() => setKeys({ ...keys, typegptApiKey: " " })} />
-          <Button type="button" variant="outline" onClick={() => testKey("typegpt")}>Test TypeGPT key</Button>
-          <ApiKeyField label="Gemini (Google) API Key" configured={credentials.googleKeyConfigured} value={keys.googleApiKey} onChange={(googleApiKey) => setKeys({ ...keys, googleApiKey })} onRemove={() => setKeys({ ...keys, googleApiKey: " " })} />
-          <Button type="button" variant="outline" onClick={() => testKey("gemini")}>Test Gemini key</Button>
-          <ModelPicker label="Voice Model" value={credentials.voiceModel} models={voiceModels} disabled={!credentials.googleKeyConfigured && !preferences.liveKitConfigAvailable} onChange={(voiceModel) => setCredentials({ ...credentials, voiceModel })} />
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={credentials.useOwnLiveKit} onChange={(event) => setCredentials({ ...credentials, useOwnLiveKit: event.target.checked })} />
-            Use my own LiveKit project
-          </label>
-          {credentials.useOwnLiveKit ? (
-            <LiveKitCredentialsForm
-              liveKitUrl={credentials.liveKitUrl ?? ""}
-              liveKitApiKey={keys.liveKitApiKey}
-              liveKitApiSecret={keys.liveKitApiSecret}
-              onChange={(patch) => {
-                if (patch.liveKitUrl !== undefined) setCredentials({ ...credentials, liveKitUrl: patch.liveKitUrl });
-                setKeys((current) => ({ ...current, ...patch }));
-              }}
-            />
-          ) : null}
+          <ApiKeyField
+            label="TypeGPT API Key"
+            configured={currentCredentials.typegptKeyConfigured}
+            value={typegptApiKey}
+            onChange={setTypegptApiKey}
+            onRemove={() => setTypegptApiKey(" ")}
+          />
           <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" onClick={testKey}>Test TypeGPT key</Button>
             <Button type="button" variant="outline" onClick={testMic}>Test microphone</Button>
-            <WebSpeechTester rate={preferences.speechRate} pitch={preferences.speechPitch} />
-            <LiveKitConnectionTester onTest={() => setMessage(preferences.liveKitConfigAvailable ? "LiveKit configuration is available server-side." : "Natural Call Voice needs Gemini and LiveKit credentials.")} />
+            <WebSpeechTester rate={currentPreferences.speechRate} pitch={currentPreferences.speechPitch} />
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Fallback & Behavior</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Speech Behavior</CardTitle></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
-          <label className="flex items-center gap-2 text-sm md:col-span-2">
-            <input type="checkbox" checked={preferences.autoFallbackEnabled} onChange={(event) => setPreferences({ ...preferences, autoFallbackEnabled: event.target.checked })} />
-            Auto-fallback to Fast & Free if Natural Call fails
-          </label>
           <div className="space-y-2">
             <Label>Language</Label>
-            <Select value={preferences.languageCode} onChange={(event) => setPreferences({ ...preferences, languageCode: event.target.value })}>
+            <Select value={currentPreferences.languageCode} onChange={(event) => setPreferences({ ...currentPreferences, languageCode: event.target.value })}>
               <option value="en-US">English (US)</option>
               <option value="en-IN">English (India)</option>
               <option value="en-GB">English (UK)</option>
@@ -173,18 +165,18 @@ export function VoiceSettingsForm() {
           </div>
           <div className="space-y-2">
             <Label>Preferred browser voice</Label>
-            <Input value={preferences.preferredBrowserVoice ?? ""} onChange={(event) => setPreferences({ ...preferences, preferredBrowserVoice: event.target.value || null })} />
+            <Input value={currentPreferences.preferredBrowserVoice ?? ""} onChange={(event) => setPreferences({ ...currentPreferences, preferredBrowserVoice: event.target.value || null })} />
           </div>
           <div className="space-y-2">
             <Label>Speech rate</Label>
-            <Input type="number" min="0.5" max="2" step="0.1" value={preferences.speechRate} onChange={(event) => setPreferences({ ...preferences, speechRate: Number(event.target.value) })} />
+            <Input type="number" min="0.5" max="2" step="0.1" value={currentPreferences.speechRate} onChange={(event) => setPreferences({ ...currentPreferences, speechRate: Number(event.target.value) })} />
           </div>
           <div className="space-y-2">
             <Label>Speech pitch</Label>
-            <Input type="number" min="0" max="2" step="0.1" value={preferences.speechPitch} onChange={(event) => setPreferences({ ...preferences, speechPitch: Number(event.target.value) })} />
+            <Input type="number" min="0" max="2" step="0.1" value={currentPreferences.speechPitch} onChange={(event) => setPreferences({ ...currentPreferences, speechPitch: Number(event.target.value) })} />
           </div>
           <p className="rounded-md border bg-muted p-3 text-sm text-muted-foreground md:col-span-2">
-            Auto Select tries Natural Call Voice first. If it is unavailable because of plan, missing API key, microphone permission, or a network issue, JobLens switches to Fast & Free Voice. If neither works, you can still type your questions.
+            JobLens uses browser speech recognition and speech synthesis for voice conversation.
           </p>
         </CardContent>
       </Card>

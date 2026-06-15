@@ -19,9 +19,10 @@ export async function POST(request: Request) {
     if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to tailor resumes.", 401);
     const body = schema.parse(await readJson(request));
     const supabase = createSupabaseServiceClient();
-    const [{ data: resume, error: resumeError }, { data: page, error: pageError }] = await Promise.all([
+    const [{ data: resume, error: resumeError }, { data: page, error: pageError }, { data: memoryRow }] = await Promise.all([
       supabase.from("resumes").select("*").eq("user_id", user.id).eq("id", body.resumeId).single(),
-      supabase.from("page_contexts").select("*").eq("user_id", user.id).eq("id", body.pageContextId).single()
+      supabase.from("page_contexts").select("*").eq("user_id", user.id).eq("id", body.pageContextId).single(),
+      supabase.from("user_ai_memory").select("memory_text").eq("user_id", user.id).maybeSingle()
     ]);
     if (resumeError) throw resumeError;
     if (pageError) throw pageError;
@@ -37,8 +38,11 @@ export async function POST(request: Request) {
       .filter((line) => /required|experience|skill|responsib|must|preferred/i.test(line))
       .slice(0, 30);
 
+    const userMemory = memoryRow?.memory_text?.trim() ?? "";
+    const memoryBlock = userMemory ? `\n\n## User memory (context about this user, provided by them)\n${userMemory}` : "";
+
     const result = await callBrainModel(user.id, [
-      { role: "system", content: globalSystemPrompt },
+      { role: "system", content: `${globalSystemPrompt}${memoryBlock}` },
       { role: "user", content: resumeTailoringPrompt({ resumeBullets, jobRequirements }) }
     ]);
     const parsed = await parseModelJson(result.answer, resumeTailoringSchema);

@@ -26,7 +26,7 @@ export async function PATCH(request: Request) {
       .upsert(
         {
           user_id: user.id,
-          default_voice_mode: body.defaultVoiceMode,
+          default_voice_mode: body.defaultVoiceMode ?? "web_speech",
           language_code: body.languageCode,
           auto_fallback_enabled: body.autoFallbackEnabled,
           speech_rate: body.speechRate,

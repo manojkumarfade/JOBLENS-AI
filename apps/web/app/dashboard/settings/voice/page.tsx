@@ -5,7 +5,7 @@ export default function VoiceSettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold">Voice and AI settings</h1>
-        <p className="mt-2 text-muted-foreground">Choose voice mode, brain model, BYOK credentials, and fallback behavior.</p>
+        <p className="mt-2 text-muted-foreground">Manage TypeGPT model settings, BYOK credentials, and browser speech behavior.</p>
       </div>
       <VoiceSettingsForm />
     </div>

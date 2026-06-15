@@ -1,5 +1,4 @@
-import type { VoiceMode } from "@joblens/shared";
-import { apiFetch, loadStartupState, setExtensionToken } from "./apiClient";
+import { clearExtensionToken, getExtensionToken, loadStartupState, setExtensionToken } from "./apiClient";
 import type { ExtensionMessage } from "./types/messages";
 import { resolveVoiceMode } from "./voice/modeResolver";
 
@@ -31,10 +30,35 @@ chrome.runtime.onMessageExternal.addListener((message, _sender, sendResponse) =>
   return true;
 });
 
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== "local" || !changes.extensionToken) return;
+  void broadcastAuthState(Boolean(changes.extensionToken.newValue));
+});
+
 async function storeExtensionToken(token: string, expiresAt?: string) {
   await setExtensionToken(token, expiresAt);
   await loadStartupState();
+  await broadcastAuthState(true);
   return { ok: true };
+}
+
+async function removeExtensionToken() {
+  await clearExtensionToken();
+  await broadcastAuthState(false);
+  return { ok: true };
+}
+
+async function broadcastAuthState(signedIn: boolean) {
+  const tabs = await chrome.tabs.query({});
+  await Promise.all(
+    tabs
+      .filter((tab) => typeof tab.id === "number")
+      .map((tab) =>
+        chrome.tabs
+          .sendMessage(tab.id!, { type: "AUTH_STATE_CHANGED", payload: { signedIn } } satisfies ExtensionMessage)
+          .catch(() => null)
+      )
+  );
 }
 
 async function handleExternalMessage(message: unknown) {
@@ -47,8 +71,21 @@ async function handleExternalMessage(message: unknown) {
 }
 
 async function handleMessage(message: ExtensionMessage, sender: chrome.runtime.MessageSender) {
+  if (message.type === "GET_AUTH_STATE") {
+    return { ok: true, signedIn: Boolean(await getExtensionToken()) };
+  }
+
   if (message.type === "STORE_EXTENSION_TOKEN") {
     return storeExtensionToken(message.payload.token, message.payload.expiresAt);
+  }
+
+  if (message.type === "CLEAR_EXTENSION_TOKEN") {
+    return removeExtensionToken();
+  }
+
+  if (message.type === "SYNC_STARTUP_STATE") {
+    const state = await loadStartupState();
+    return { ok: true, ...state, signedIn: Boolean(await getExtensionToken()) };
   }
 
   if (message.type === "PAGE_CONTEXT_READY") {
@@ -62,41 +99,9 @@ async function handleMessage(message: ExtensionMessage, sender: chrome.runtime.M
       return { ok: false };
     }
 
-    const preferredMode = (state.preferences.defaultVoiceMode ?? "auto") as VoiceMode;
     const resolvedMode = resolveVoiceMode({
-      preferredMode,
-      browserSupportsWebSpeech: true,
-      liveKitEnabledForUser: Boolean(state.preferences.liveKitEnabled),
-      liveKitConfigAvailable: Boolean(state.preferences.liveKitConfigAvailable),
-      microphonePermission: "prompt"
+      browserSupportsWebSpeech: true
     });
-
-    if (resolvedMode === "livekit_gemini") {
-      try {
-        await chrome.tabs.sendMessage(sender.tab.id, {
-          type: "VOICE_STATE_CHANGED",
-          payload: { state: "connecting", resolvedMode }
-        } satisfies ExtensionMessage);
-        const session = await apiFetch<any>("/api/livekit/start-session", {
-          method: "POST",
-          body: JSON.stringify({ preferredVoiceMode: preferredMode, page: message.payload })
-        });
-        await chrome.tabs.sendMessage(sender.tab.id, {
-          type: "START_LIVEKIT_SESSION",
-          payload: { session, page: message.payload }
-        } satisfies ExtensionMessage);
-      } catch (error: any) {
-        await chrome.tabs.sendMessage(sender.tab.id, {
-          type: "ERROR",
-          payload: {
-            code: error.code ?? "VOICE_MODE_UNAVAILABLE",
-            message: error.message ?? "Natural Call Voice could not start.",
-            fallbackMode: error.fallbackMode ?? "web_speech"
-          }
-        } satisfies ExtensionMessage);
-      }
-      return { ok: true };
-    }
 
     if (resolvedMode === "web_speech") {
       await chrome.tabs.sendMessage(sender.tab.id, {
@@ -113,10 +118,6 @@ async function handleMessage(message: ExtensionMessage, sender: chrome.runtime.M
   }
 
   if (message.type === "VOICE_MODE_CHANGED") {
-    await apiFetch("/api/voice/preferences", {
-      method: "PATCH",
-      body: JSON.stringify({ defaultVoiceMode: message.payload.mode })
-    });
     await loadStartupState();
     return { ok: true };
   }

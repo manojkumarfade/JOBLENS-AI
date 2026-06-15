@@ -5,5 +5,7 @@ export interface ExtractedPageContext {
   extractedAt?: string;
   text: string;
   headings: string[];
+  likelyJobTitle?: string;
+  likelyCompany?: string;
   confidence?: number;
 }

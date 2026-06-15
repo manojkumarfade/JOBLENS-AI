@@ -4,12 +4,10 @@ export interface VoicePreferences {
   defaultVoiceMode: VoiceMode;
   languageCode: string;
   webSpeechEnabled: boolean;
-  liveKitEnabled: boolean;
   autoFallbackEnabled: boolean;
   speechRate: number;
   speechPitch: number;
   preferredBrowserVoice: string | null;
-  liveKitConfigAvailable?: boolean;
 }
 
 export interface VoiceStatePayload {

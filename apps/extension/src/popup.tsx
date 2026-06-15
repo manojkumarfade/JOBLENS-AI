@@ -1,27 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import type { VoiceMode } from "@joblens/shared";
 import { getModelLabel } from "@joblens/shared";
 import { API_BASE_URL } from "./config";
-import { apiFetch, getExtensionToken, loadStartupState } from "./apiClient";
-
-const modes: Array<{ value: VoiceMode; label: string }> = [
-  { value: "auto", label: "Auto Select" },
-  { value: "web_speech", label: "Fast & Free Voice" },
-  { value: "livekit_gemini", label: "Natural Call Voice" }
-];
+import { getExtensionToken, loadStartupState } from "./apiClient";
+import type { ExtensionMessage } from "./types/messages";
+import { VOICE_OPTIONS, type VoiceOption } from "./voice/webSpeechController";
 
 function Popup() {
   const [signedIn, setSignedIn] = useState(false);
-  const [mode, setMode] = useState<VoiceMode>("auto");
   const [model, setModel] = useState("Platform Default");
+  const [voiceId, setVoiceId] = useState<VoiceOption["id"]>("voice_a");
   const [message, setMessage] = useState("");
+  const [syncing, setSyncing] = useState(false);
 
   async function load() {
     const token = await getExtensionToken();
     setSignedIn(Boolean(token));
+    const stored = await chrome.storage.local.get(["voiceId"]);
+    if (typeof stored.voiceId === "string" && VOICE_OPTIONS.some((option) => option.id === stored.voiceId)) {
+      setVoiceId(stored.voiceId as VoiceOption["id"]);
+    }
+    if (!token) return;
     const state = await loadStartupState().catch(() => null);
-    if (state?.preferences?.defaultVoiceMode) setMode(state.preferences.defaultVoiceMode);
     if (state?.credentials?.brainModel) setModel(getModelLabel(state.credentials.brainModel));
   }
 
@@ -29,18 +29,25 @@ function Popup() {
     void load();
   }, []);
 
-  async function changeMode(next: VoiceMode) {
-    setMode(next);
-    try {
-      await apiFetch("/api/voice/preferences", {
-        method: "PATCH",
-        body: JSON.stringify({ defaultVoiceMode: next })
-      });
-      setMessage("Voice mode updated.");
-      await load();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not update mode.");
-    }
+  async function refresh() {
+    setSyncing(true);
+    setMessage("");
+    await chrome.runtime.sendMessage({ type: "SYNC_STARTUP_STATE" } satisfies ExtensionMessage).catch(() => null);
+    await load();
+    setMessage("Status refreshed.");
+    setSyncing(false);
+  }
+
+  async function signOut() {
+    await chrome.runtime.sendMessage({ type: "CLEAR_EXTENSION_TOKEN" } satisfies ExtensionMessage).catch(() => null);
+    setSignedIn(false);
+    setMessage("Signed out of the extension.");
+  }
+
+  async function changeVoiceStyle(next: VoiceOption["id"]) {
+    setVoiceId(next);
+    await chrome.storage.local.set({ voiceId: next });
+    setMessage("Voice style updated.");
   }
 
   function openExtensionLogin() {
@@ -67,8 +74,13 @@ function Popup() {
           <h1>JobLens Voice</h1>
           <p>{signedIn ? "Signed in" : "Not signed in"}</p>
         </div>
-        <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard` })}>Open</button>
+        <button type="button" onClick={refresh} disabled={syncing}>{syncing ? "Syncing" : "Sync"}</button>
       </header>
+
+      <section>
+        <h2>Backend</h2>
+        <p className="mono">{API_BASE_URL}</p>
+      </section>
 
       {!signedIn ? (
         <button className="primary" type="button" onClick={openExtensionLogin}>
@@ -77,29 +89,27 @@ function Popup() {
       ) : null}
 
       <section>
-        <h2>Voice mode</h2>
-        <div className="choices">
-          {modes.map((item) => (
-            <label key={item.value}>
-              <input type="radio" checked={mode === item.value} onChange={() => changeMode(item.value)} />
-              <span>{item.label}</span>
-            </label>
+        <h2>Voice style:</h2>
+        <select value={voiceId} onChange={(event) => changeVoiceStyle(event.target.value as VoiceOption["id"])} disabled={!signedIn}>
+          {VOICE_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
           ))}
-        </div>
+        </select>
       </section>
 
       <section>
-        <h2>Brain model</h2>
+        <h2>Selected model</h2>
         <p className="badge">{model}</p>
       </section>
 
       <div className="links">
-        <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard/settings/voice` })}>
-          Manage AI models & API keys
-        </button>
         <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard` })}>
           Open dashboard
         </button>
+        <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard/settings/voice` })}>
+          Open voice settings
+        </button>
+        {signedIn ? <button type="button" onClick={signOut}>Sign out / clear token</button> : null}
       </div>
       {message ? <p className="message">{message}</p> : null}
     </main>
@@ -108,20 +118,21 @@ function Popup() {
 
 const styles = document.createElement("style");
 styles.textContent = `
-  body { margin: 0; width: 340px; background: #fbfdfb; color: #142018; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+  body { margin: 0; width: 350px; background: #fbfdfb; color: #142018; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
   main { padding: 14px; display: grid; gap: 14px; }
   header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   h1 { margin: 0; font-size: 16px; }
   h2 { margin: 0 0 8px; font-size: 13px; }
   p { margin: 0; color: #58665e; font-size: 12px; }
   button { border: 1px solid #d8e0da; border-radius: 8px; background: white; color: #142018; padding: 9px 10px; font: inherit; cursor: pointer; }
-  .primary { width: 100%; background: #4c9a68; color: white; border-color: #4c9a68; font-weight: 700; }
+  button:disabled { opacity: .6; cursor: not-allowed; }
+  .primary { width: 100%; background: #246b45; color: white; border-color: #246b45; font-weight: 700; }
   section { border: 1px solid #d8e0da; border-radius: 8px; background: white; padding: 12px; }
-  .choices { display: grid; gap: 8px; }
-  label { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  select { width: 100%; border: 1px solid #b6f08c; border-radius: 999px; background: #fff; color: #2d6a2d; padding: 9px 12px; font: inherit; font-weight: 700; }
   .badge { display: inline-flex; width: fit-content; border-radius: 6px; background: #e8f4ec; color: #1b5f36; padding: 5px 8px; font-weight: 700; }
   .links { display: grid; gap: 8px; }
   .message { border: 1px solid #d8e0da; border-radius: 8px; background: white; padding: 8px; }
+  .mono { overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 `;
 document.head.appendChild(styles);
 

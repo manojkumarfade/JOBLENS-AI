@@ -19,6 +19,12 @@
   ],
   "permissions": ["activeTab", "storage", "scripting"],
   "host_permissions": ["http://localhost:3000/*", "https://*.vercel.app/*"],
+  "web_accessible_resources": [
+    {
+      "resources": ["contentScriptModule.js", "assets/*.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "externally_connectable": {
     "matches": ["http://localhost:3000/*", "https://*.vercel.app/*"]
   }

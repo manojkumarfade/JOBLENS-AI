@@ -1,13 +1,11 @@
 import type { VoicePreferences } from "@joblens/shared";
 import { boolEnv, env } from "../env";
 import { createSupabaseServiceClient } from "../supabase/server";
-import { liveKitConfigAvailable } from "../ai/modelRouter";
 
 type VoicePreferenceRow = {
-  default_voice_mode: "auto" | "web_speech" | "livekit_gemini";
+  default_voice_mode: "web_speech";
   language_code: string;
   web_speech_enabled: boolean;
-  livekit_enabled: boolean;
   auto_fallback_enabled: boolean;
   speech_rate: number;
   speech_pitch: number;
@@ -28,7 +26,7 @@ export async function ensureVoicePreferences(userId: string) {
     .from("user_voice_preferences")
     .insert({
       user_id: userId,
-      default_voice_mode: env("DEFAULT_VOICE_MODE", "auto")
+      default_voice_mode: env("DEFAULT_VOICE_MODE", "web_speech")
     })
     .select("*")
     .single();
@@ -36,16 +34,14 @@ export async function ensureVoicePreferences(userId: string) {
   return inserted as VoicePreferenceRow;
 }
 
-export async function mapVoicePreferences(userId: string, row: VoicePreferenceRow): Promise<VoicePreferences> {
+export async function mapVoicePreferences(_userId: string, row: VoicePreferenceRow): Promise<VoicePreferences> {
   return {
-    defaultVoiceMode: row.default_voice_mode,
+    defaultVoiceMode: "web_speech",
     languageCode: row.language_code,
     webSpeechEnabled: row.web_speech_enabled && boolEnv("ALLOW_WEB_SPEECH", true),
-    liveKitEnabled: row.livekit_enabled && boolEnv("ALLOW_LIVEKIT", true),
     autoFallbackEnabled: row.auto_fallback_enabled,
     speechRate: Number(row.speech_rate),
     speechPitch: Number(row.speech_pitch),
-    preferredBrowserVoice: row.preferred_browser_voice,
-    liveKitConfigAvailable: await liveKitConfigAvailable(userId)
+    preferredBrowserVoice: row.preferred_browser_voice
   };
 }

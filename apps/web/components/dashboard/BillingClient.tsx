@@ -6,10 +6,14 @@ import { RazorpayCheckoutButton } from "@/components/dashboard/RazorpayCheckoutB
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function BillingClient({ plan, renewalDate }: { plan?: string | null; renewalDate?: string | null }) {
+export function BillingClient({ plan, renewalDate, portalUrl }: { plan?: string | null; renewalDate?: string | null; portalUrl?: string | null }) {
   const [message, setMessage] = useState("");
 
   async function openPortal() {
+    if (portalUrl) {
+      window.location.assign(portalUrl);
+      return;
+    }
     const res = await fetch("/api/billing/portal", { method: "POST" });
     const data = await res.json();
     if (data.url) window.location.assign(data.url);

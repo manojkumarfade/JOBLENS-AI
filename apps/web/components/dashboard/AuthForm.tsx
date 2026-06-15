@@ -38,6 +38,7 @@ export function AuthForm({
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginMethod, setLoginMethod] = useState<"unknown" | "password" | "google" | "new">(mode === "signup" ? "password" : "unknown");
 
   useEffect(() => {
     if (!fromExtension) return;
@@ -135,6 +136,20 @@ export function AuthForm({
     setLoading(true);
     setMessage("");
 
+    if (mode === "login" && loginMethod === "unknown") {
+      const res = await fetch("/api/auth/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const body = await res.json().catch(() => null);
+      const method = body?.method === "google" ? "google" : body?.method === "password" ? "password" : "new";
+      setLoginMethod(method);
+      setMessage(method === "google" ? "Use Google to continue." : method === "new" ? "No account found. Create an account first." : "");
+      setLoading(false);
+      return;
+    }
+
     const result =
       mode === "signup"
         ? await supabase.auth.signUp({
@@ -187,16 +202,40 @@ export function AuthForm({
           ) : null}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                if (mode === "login") setLoginMethod("unknown");
+              }}
+              required
+            />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} required />
-          </div>
+          {mode === "signup" || loginMethod === "password" ? (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} required />
+            </div>
+          ) : null}
+          {mode === "login" && loginMethod === "google" ? (
+            <Button type="button" variant="outline" className="w-full" onClick={signInWithGoogle} disabled={loading}>
+              <Chrome className="h-4 w-4" /> Continue with Google
+            </Button>
+          ) : null}
+          {mode === "login" && loginMethod === "new" ? (
+            <Button asChild variant="outline" className="w-full">
+              <a href="/signup">Create an account</a>
+            </Button>
+          ) : null}
           {message ? <p className="rounded-md border bg-muted p-3 text-sm">{message}</p> : null}
-          <Button type="submit" className="w-full" disabled={loading}>
-            <Mail className="h-4 w-4" /> {loading ? "Working..." : mode === "signup" ? "Sign up with email" : "Log in with email"}
-          </Button>
+          {mode === "signup" || loginMethod === "unknown" || loginMethod === "password" ? (
+            <Button type="submit" className="w-full" disabled={loading}>
+              <Mail className="h-4 w-4" /> {loading ? "Working..." : mode === "signup" ? "Sign up with email" : loginMethod === "unknown" ? "Continue with email" : "Log in with email"}
+            </Button>
+          ) : null}
           {mode === "login" ? (
             <p className="text-sm text-muted-foreground">
               If Supabase says email limit exceeded, use Google login or configure custom SMTP in Supabase Auth.

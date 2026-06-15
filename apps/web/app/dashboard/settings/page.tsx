@@ -13,7 +13,12 @@ export default async function SettingsPage() {
         <h1 className="text-3xl font-semibold">Account settings</h1>
         <p className="mt-2 text-muted-foreground">Manage profile, theme, billing shortcuts, and privacy controls.</p>
       </div>
-      <SettingsClient email={user.email} name={profile?.full_name} />
+      <SettingsClient
+        email={user.email}
+        name={profile?.display_name ?? profile?.full_name}
+        initialUsername={profile?.username}
+        initialDisplayName={profile?.display_name ?? profile?.full_name}
+      />
     </div>
   );
 }

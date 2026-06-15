@@ -4,8 +4,10 @@ import { isMissingSupabaseSchemaError, supabaseSetupMessage } from "./supabase/s
 export type ApiErrorCode =
   | "AUTH_REQUIRED"
   | "BAD_REQUEST"
+  | "CONFLICT"
   | "FORBIDDEN"
   | "NOT_FOUND"
+  | "VALIDATION"
   | "MODEL_CREDENTIALS_MISSING"
   | "INVALID_API_KEY"
   | "QUOTA_EXCEEDED"

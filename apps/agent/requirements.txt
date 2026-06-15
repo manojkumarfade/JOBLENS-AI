@@ -1,6 +1,0 @@
-livekit-agents
-livekit-plugins-google
-python-dotenv
-httpx
-pydantic
-pytest

@@ -22,7 +22,6 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
     "jose": "^6.0.11",
-    "livekit-server-sdk": "^2.13.0",
     "lucide-react": "^0.468.0",
     "mammoth": "^1.9.1",
     "next": "^15.5.19",

@@ -24,14 +24,14 @@ export function mapAnalysis(row: AnalysisRow) {
   };
 }
 
-export async function recentAnalyses(userId: string, limit = 20) {
+export async function recentAnalyses(userId: string, limit = 20, offset = 0) {
   const supabase = createSupabaseServiceClient();
   const { data, error } = await supabase
     .from("job_analyses")
     .select("*")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .range(offset, offset + limit - 1);
   if (error) throw error;
   return (data ?? []).map(mapAnalysis);
 }

@@ -6,7 +6,7 @@ const features = [
   { title: "Resume matching", icon: Target, text: "Compare the job with evidence from the active resume." },
   { title: "Missing skills", icon: CheckCircle2, text: "Separate strong matches from gaps without inflating experience." },
   { title: "Truthful tailoring", icon: Sparkles, text: "Improve resume bullets only when backed by the user's background." },
-  { title: "Voice Q&A", icon: Mic2, text: "Ask follow-up questions through Fast & Free or Natural Call Voice." },
+  { title: "Voice Q&A", icon: Mic2, text: "Ask follow-up questions through browser-powered voice conversation." },
   { title: "Save and track", icon: Save, text: "Keep analyses and return to them from the dashboard." }
 ];
 
