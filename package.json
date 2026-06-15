@@ -1,0 +1,30 @@
+{
+  "name": "joblens-voice",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/web",
+    "apps/extension",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev -w apps/web",
+    "dev:extension": "npm run dev -w apps/extension",
+    "build:web": "npm run build -w apps/web",
+    "build:extension": "npm run build -w apps/extension",
+    "build:shared": "npm run build -w packages/shared",
+    "typecheck": "npm run typecheck -w packages/shared && npm run typecheck -w apps/web && npm run typecheck -w apps/extension",
+    "lint": "npm run lint -w apps/web && npm run lint -w apps/extension",
+    "test": "npm run test -w packages/shared && npm run test -w apps/web && npm run test -w apps/extension",
+    "test:agent": "cd apps/agent && python -m pytest"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@number-flow/react": "^0.6.0",
+    "framer-motion": "^12.40.0",
+    "ogl": "^1.0.11",
+    "razorpay": "^2.9.6"
+  }
+}

@@ -1,0 +1,2 @@
+-- Seed intentionally empty for v1. Profiles, voice preferences, model
+-- credentials, and subscriptions are created by the auth trigger.

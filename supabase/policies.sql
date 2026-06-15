@@ -1,0 +1,3 @@
+-- RLS policies live in `migrations/202606150001_initial_schema.sql` so a fresh
+-- Supabase project can be bootstrapped in one pass. This file exists as the
+-- named policy reference requested by the implementation spec.

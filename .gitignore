@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Build outputs
+dist/
+.turbo/
+
+# Vercel
+.vercel/
+
+# Environment files (IMPORTANT)
+.env
+.env.local
+.env.*
+.env.*.local
+
+# Keep examples
+!.env.example
+!.env.local.example
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+
+# Supabase
+supabase/.branches/
+supabase/.temp/
+
+# Personal notes
+memory.md

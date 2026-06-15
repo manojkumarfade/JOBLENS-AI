@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "JobLens Voice",
+  "version": "1.0.0",
+  "description": "Voice-first AI career copilot for job pages.",
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["contentScript.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["http://localhost:3000/*", "https://*.vercel.app/*"],
+  "externally_connectable": {
+    "matches": ["http://localhost:3000/*", "https://*.vercel.app/*"]
+  }
+}
