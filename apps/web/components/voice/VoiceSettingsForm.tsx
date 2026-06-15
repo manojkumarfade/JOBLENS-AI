@@ -36,6 +36,7 @@ export function VoiceSettingsForm() {
   }
 
   useEffect(() => {
+    // Initial client-side fetch after auth-protected dashboard render.
     void load();
   }, []);
 

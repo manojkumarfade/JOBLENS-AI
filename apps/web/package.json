@@ -13,18 +13,21 @@
   },
   "dependencies": {
     "@joblens/shared": "file:../../packages/shared",
+    "@number-flow/react": "^0.6.0",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.40.0",
     "jose": "^6.0.11",
     "livekit-server-sdk": "^2.13.0",
     "lucide-react": "^0.468.0",
     "mammoth": "^1.9.1",
-    "next": "^15.3.3",
+    "next": "^15.5.19",
     "next-themes": "^0.4.6",
+    "ogl": "^1.0.11",
     "pdf-parse": "^1.1.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -42,11 +45,11 @@
     "@types/react-dom": "^19.1.6",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.29.0",
-    "eslint-config-next": "^15.3.3",
+    "eslint-config-next": "^15.5.19",
     "jsdom": "^26.1.0",
-    "postcss": "^8.5.6",
+    "postcss": "^8.5.15",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.3"
+    "vitest": "^4.1.9"
   }
 }

@@ -26,5 +26,9 @@
     "framer-motion": "^12.40.0",
     "ogl": "^1.0.11",
     "razorpay": "^2.9.6"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1",
+    "vite": "^8.0.16"
   }
 }

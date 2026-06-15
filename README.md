@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # JobLens Voice
 
 JobLens Voice is a voice-first AI career copilot built as a monorepo:
@@ -20,3 +21,7 @@ The five implementation specs in `D:\Joblens Voice Assistant\MD FIles` are the p
 6. Start the agent with `cd apps/agent && python agent.py dev`.
 
 Secrets are server-only. The extension never stores model API keys, LiveKit secrets, or Gemini keys.
+=======
+# Hireready-AI
+HireReady AI is an AI-assisted fresher hiring platform for recruiters, training institutes, and engineering graduates.
+>>>>>>> d0f841db9d1c06e459a57ddc57fb7ae4dffc4578

@@ -12,7 +12,7 @@ export function BillingClient({ plan, renewalDate }: { plan?: string | null; ren
   async function openPortal() {
     const res = await fetch("/api/billing/portal", { method: "POST" });
     const data = await res.json();
-    if (data.url) location.href = data.url;
+    if (data.url) window.location.assign(data.url);
     else setMessage("Subscription portal is not configured yet.");
   }
 

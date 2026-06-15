@@ -11,7 +11,10 @@ export function ThemeToggle({ className }: { className?: string }) {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    // Avoid hydration mismatch while next-themes resolves the stored preference.
+    setMounted(true);
+  }, []);
 
   const current = mounted ? theme ?? "system" : "system";
   const isDark = mounted ? resolvedTheme === "dark" : false;
