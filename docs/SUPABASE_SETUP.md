@@ -1,5 +1,25 @@
 # Supabase Setup
 
+## About This Project
+
+**JobLens Voice** is a voice-first AI career copilot. It lives as a Chrome extension — you open it on any job listing page, click a floating button, and speak naturally with an AI that understands the job, knows your resume, and can analyze fit, answer questions, and suggest improvements. The extension works with a Next.js web backend (Supabase auth + database, TypeGPT AI, Razorpay billing) and syncs data via a shared web dashboard at `/dashboard`.
+
+This document covers Supabase configuration for the production deployment at [joblenswithai.vercel.app](https://joblenswithai.vercel.app).
+
+## Installing the Chrome Extension
+
+1. Go to [joblenswithai.vercel.app/install-extension](https://joblenswithai.vercel.app/install-extension)
+2. Download the extension ZIP file.
+3. Unzip the file on your computer.
+4. Open `chrome://extensions` in your browser.
+5. Enable **Developer mode** (toggle in the top-right corner).
+6. Click **Load unpacked** and select the unzipped folder.
+7. The JobLens Voice extension icon will appear in your toolbar.
+8. Navigate to any job listing on LinkedIn, Indeed, or similar sites.
+9. Click the extension icon to sign in, then click the floating voice button on the page to start.
+
+## Quick Start
+
 The error below means the app is connected to Supabase, but the JobLens tables have not been created yet:
 
 ```text
@@ -38,15 +58,15 @@ If the app still shows `PGRST205`, wait a few seconds and refresh. Supabase Post
 5. In Supabase **Authentication -> URL Configuration**, add these site/redirect URLs for local development:
 
    ```text
-   http://localhost:3000
-   http://localhost:3000/auth/callback
-   http://localhost:3000/login?from=extension
+   https://joblenswithai.vercel.app
+   https://joblenswithai.vercel.app/auth/callback
+   https://joblenswithai.vercel.app/login?from=extension
    ```
 
 For local development, make sure this value is also set in `apps/web/.env.local`:
 
 ```env
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=https://joblenswithai.vercel.app
 ```
 
 If extension login sends you to `https://your-domain.vercel.app/login?from=extension&oauth=success`, the local app URL is still set to the placeholder somewhere. Replace that placeholder with your local URL for development, or with your real deployed domain in production.
