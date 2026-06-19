@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "JobLens Recruiter AI",
+  "name": "JobLens AI Browser Copilot",
   "version": "1.0.0",
-  "description": "AI-powered recruiter candidate ranking and shortlisting assistant.",
+  "description": "Voice-first AI assistant for summarizing webpages and analyzing job fit.",
   "action": {
     "default_popup": "popup.html"
   },

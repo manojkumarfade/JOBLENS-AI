@@ -1,8 +1,6 @@
-# JobLens Recruiter AI
+# JobLens AI Browser Copilot
 
-JobLens Recruiter AI is an AI-powered candidate ranking and shortlisting proof of concept for recruiters and HR users.
-
-It goes beyond keyword filtering: recruiters enter a job description, add or upload candidate profiles, and receive an explainable ranked shortlist based on job understanding, semantic relevance, must-have skills, experience, projects, career metadata, and activity signals.
+JobLens AI Browser Copilot is a voice-first AI assistant for summarizing any webpage, explaining page content, and analyzing job pages against a user's active resume. It also includes a recruiter module for AI-powered candidate ranking and explainable shortlisting.
 
 Production web app:
 
@@ -10,24 +8,60 @@ Production web app:
 https://joblenswithai.vercel.app
 ```
 
-## Project Overview
+## Product Overview
 
-- `apps/web`: Next.js app, recruiter dashboard, API route handlers, Supabase integration
-- `apps/extension`: legacy Chrome Manifest V3 extension kept working from the earlier product iteration
-- `packages/shared`: shared TypeScript types and schemas
+- General users use the Chrome extension to summarize or explain any webpage by voice.
+- Candidates upload a personal resume and ask job-fit questions on job boards.
+- Recruiters use the Recruiter AI module to enter job descriptions, compare candidate profiles, and generate ranked shortlists.
+
+The product uses one Supabase Auth system. Users choose a role during onboarding:
+
+- `candidate`: default role for browser copilot, personal resume, and job-fit analysis
+- `recruiter`: routes to recruiter ranking by default, while still allowing browser copilot tools
+
+## Apps And Packages
+
+- `apps/web`: Next.js app, auth, onboarding, candidate dashboard, recruiter dashboard, API routes, Supabase integration
+- `apps/extension`: Chrome Manifest V3 extension with Web Speech voice input, transparent live transcription, DOM extraction after click, and browser TTS output
+- `packages/shared`: shared TypeScript schemas, types, model catalog, and voice preferences
 - `supabase`: migrations, RLS policies, and setup references
 
-This POC focuses on candidate ranking and explainable shortlisting. Some legacy voice-related files may exist from earlier iterations but are not part of the current core evaluation path.
+## Core Browser Copilot Flow
 
-## Core Recruiter Flow
+1. Sign in with the shared web auth system.
+2. Open `/dashboard/candidate`.
+3. Install or load the Chrome extension.
+4. Open any normal webpage.
+5. Click the floating JobLens voice button.
+6. Ask: "Summarize this page", "Explain this page", or "What are the key points?"
+7. The extension extracts visible page text only after the click, sends the question and page context to the backend, and speaks the answer with browser speechSynthesis.
 
-1. Open `/dashboard/recruiter`.
-2. Enter or use the seeded Senior Full Stack Developer / AI Product Engineer job.
-3. Analyze the job to extract structured requirements.
-4. Use seeded demo candidates, add a candidate manually, or upload a PDF/DOCX/text resume.
-5. Rank candidates.
-6. Review the shortlist table, score breakdown, matched evidence, gaps, concerns, recommended next step, and interview questions.
-7. Copy the shortlist summary for recruiter review.
+Temporary live transcription stays in extension React state and is not stored by default.
+
+## Candidate Resume Flow
+
+1. Open `/dashboard/candidate/resume`.
+2. Upload a PDF, DOCX, or text resume.
+3. The existing resume parser extracts text and metadata.
+4. Mark one resume active.
+5. On a job page, ask: "Am I fit for this job?" or "What skills am I missing?"
+
+General webpage summaries do not require a resume. If a user asks for job-fit analysis without an active resume, the assistant asks them to upload one first.
+
+Personal candidate resumes are separate from recruiter candidate pools.
+
+## Recruiter AI Module
+
+Open `/dashboard/recruiter`.
+
+Recruiter flow:
+
+1. Enter or use the seeded Senior Full Stack Developer / AI Product Engineer job.
+2. Analyze the job to extract structured requirements.
+3. Use seeded demo candidates, add a candidate manually, or upload a PDF/DOCX/text resume.
+4. Rank candidates.
+5. Review the shortlist table, score breakdown, matched evidence, gaps, concerns, recommended next step, and interview questions.
+6. Copy the shortlist summary for human review.
 
 ## Ranking Algorithm
 
@@ -56,15 +90,16 @@ Signals used:
 - Activity signals such as profile completeness, recent activity, assessment score, response speed, freshness, and communication score
 - Risk flags for missing critical evidence, low experience, weak activity, or unclear profile data
 
-AI is used when available for nuanced job understanding, semantic explanation quality, concerns, recommended actions, and interview questions. If the model provider or key is unavailable, the app falls back to deterministic extraction and ranking.
+AI is used when available for nuanced job understanding, explanation quality, concerns, recommended actions, and interview questions. If the model provider or key is unavailable, recruiter ranking falls back to deterministic extraction and ranking.
 
 ## API Routes
 
+- `POST /api/voice/web-speech/ask`: voice/page assistant for general webpages, job pages, and recruiter pages. Requires auth, defaults `persistTranscript` to `false`, and returns a voice-friendly answer.
 - `POST /api/recruiter/jobs/analyze`: analyzes a recruiter job description and persists a `jobs` row when the recruiter tables exist.
-- `POST /api/recruiter/candidates/parse`: parses manual candidate data or uploaded PDF/DOCX/text resumes into candidate profiles.
-- `POST /api/recruiter/rank`: ranks candidates, optionally enhances explanations with AI, and persists rankings when possible.
+- `POST /api/recruiter/candidates/parse`: parses manual candidate data or uploaded PDF/DOCX/text resumes into recruiter candidate profiles.
+- `POST /api/recruiter/rank`: ranks recruiter candidates, optionally enhances explanations with AI, and persists rankings when possible.
 
-Legacy routes for job analysis, resume upload, settings, billing, and extension auth remain available to avoid breaking the existing deployed app.
+Legacy routes for resume upload, saved analyses, settings, billing, and extension auth remain available to avoid breaking the existing deployed app.
 
 ## Database
 
@@ -75,23 +110,27 @@ supabase/migrations/202606150001_initial_schema.sql
 supabase/migrations/202606160001_remove_livekit_gemini.sql
 supabase/migrations/202606160002_user_features.sql
 supabase/migrations/202606190001_recruiter_ranking.sql
+supabase/migrations/202606200001_profile_roles.sql
 ```
 
-Recruiter MVP tables:
+Important tables:
 
-- `jobs`
-- `candidates`
-- `candidate_rankings`
+- `profiles`: account profile and `user_role`
+- `resumes`: personal candidate/general user resumes
+- `jobs`, `candidates`, `candidate_rankings`: recruiter module data
+- `voice_sessions`, `voice_transcripts`, `page_contexts`: saved voice/history data, used only when persistence is requested
 
-Each table has RLS enabled so authenticated users can only manage their own rows.
+RLS policies keep authenticated users scoped to their own rows.
 
-## Security And Fairness
+## Security, Privacy, And Fairness
 
-- Do not expose Supabase service role keys, TypeGPT keys, Razorpay secrets, extension auth secrets, encryption keys, or `.env` values.
-- Candidate ranking does not use protected attributes and should not infer gender, religion, caste, race, age, disability, marital status, photo, or any sensitive category.
+- Do not expose Supabase service role keys, model keys, Razorpay secrets, extension auth secrets, encryption keys, or `.env` values.
+- Page content is sent to the backend only after the user clicks the extension voice button.
+- Temporary live transcription is not stored by default.
+- The assistant treats webpage DOM text as untrusted input.
+- Recruiter ranking does not use protected attributes and should not infer gender, religion, caste, race, age, disability, marital status, photo, or similar sensitive categories.
 - The tool does not automatically reject candidates.
-- Explanations should be based only on candidate data and job criteria.
-- The dashboard includes a visible human-review disclaimer.
+- Hiring-related outputs are decision-support only. Human review is required.
 
 ## Local Development
 
@@ -103,8 +142,18 @@ npm run dev:web
 Open:
 
 ```text
+http://localhost:3000/dashboard/candidate
 http://localhost:3000/dashboard/recruiter
 ```
+
+For extension builds against production:
+
+```powershell
+$env:VITE_JOBLENS_API_BASE_URL="https://joblenswithai.vercel.app"
+npm run build:extension
+```
+
+Load `apps/extension/dist` from `chrome://extensions` with Developer mode enabled.
 
 ## Verification
 
@@ -127,17 +176,19 @@ Keep server-only secrets in Vercel environment variables and never ship them to 
 
 ## Known Limitations
 
-- This is a proof of concept, not an ATS replacement.
-- Demo activity signals are synthetic.
-- AI enhancements depend on the existing TypeGPT-compatible model route and configured credentials.
+- This is a proof of concept, not an ATS replacement or a final hiring decision system.
+- Browser speech recognition depends on Chrome/Edge Web Speech support and site-level microphone permission.
+- Demo recruiter activity signals are synthetic.
+- AI model calls require a configured TypeGPT-compatible provider or platform key.
 - Ranking persistence requires the recruiter Supabase migration to be applied.
-- Legacy voice/extension files remain for compatibility but are not part of the core recruiter-ranking evaluation path.
+- Temporary transcripts are not stored by default, so unsaved voice sessions do not appear in history.
 
 ## Future Improvements
 
-- Bulk candidate import and CSV export
-- Saved recruiter projects and ranking history views
+- Extension store packaging and install detection improvements
+- Saved browser copilot history with explicit opt-in
 - Stronger resume parsing with section confidence
-- Configurable scoring weights per job
-- Evaluation harness for ranking quality
+- Bulk recruiter candidate import and CSV export
+- Configurable recruiter scoring weights per job
+- Evaluation harness for ranking quality and voice-answer quality
 - Admin/audit logs for hiring workflow governance

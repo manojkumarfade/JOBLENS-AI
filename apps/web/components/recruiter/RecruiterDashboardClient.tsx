@@ -241,7 +241,7 @@ export function RecruiterDashboardClient() {
       return `${candidate.rank}. ${candidate.candidate.name} - ${candidate.overallScore}/100 (${candidate.label})\nTop reason: ${candidate.topReason}\nNext step: ${candidate.recommendedAction}`;
     });
     const summary = [
-      "JobLens Recruiter AI shortlist",
+      "JobLens Recruiter AI module shortlist",
       `${job.title || "Untitled role"}${job.company ? ` at ${job.company}` : ""}`,
       "",
       ...rows,
@@ -257,8 +257,8 @@ export function RecruiterDashboardClient() {
       <section className="rounded-lg border bg-card p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <Badge variant="secondary">JobLens Recruiter AI</Badge>
-            <h1 className="mt-3 font-display text-3xl font-bold">AI-powered candidate ranking and shortlisting engine</h1>
+            <Badge variant="secondary">Recruiter AI Ranking</Badge>
+            <h1 className="mt-3 font-display text-3xl font-bold">Candidate ranking and shortlisting module</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
               Go beyond keyword filtering. Understand the job, analyze candidate fit, integrate career and activity signals, and generate an explainable ranked shortlist in seconds.
             </p>

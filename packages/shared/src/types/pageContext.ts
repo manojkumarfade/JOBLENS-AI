@@ -1,7 +1,7 @@
 export interface ExtractedPageContext {
   url: string;
   title: string;
-  sourceType: "job_page" | "unknown";
+  sourceType: "general_page" | "job_page" | "recruiter_page" | "unknown";
   extractedAt?: string;
   text: string;
   headings: string[];

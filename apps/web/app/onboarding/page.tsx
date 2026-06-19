@@ -21,7 +21,7 @@ export default function OnboardingPage() {
       body: JSON.stringify({ display_name: displayName })
     });
     if (res.ok) {
-      router.push("/dashboard");
+      router.push("/onboarding/role");
       router.refresh();
     } else {
       const body = await res.json().catch(() => null);

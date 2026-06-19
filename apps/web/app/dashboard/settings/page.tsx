@@ -18,6 +18,7 @@ export default async function SettingsPage() {
         name={profile?.display_name ?? profile?.full_name}
         initialUsername={profile?.username}
         initialDisplayName={profile?.display_name ?? profile?.full_name}
+        initialRole={profile?.user_role ?? "candidate"}
       />
     </div>
   );

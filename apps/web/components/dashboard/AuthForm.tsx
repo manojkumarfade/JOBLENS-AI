@@ -117,7 +117,7 @@ export function AuthForm({
     const next = fromExtension
       ? `/login?from=extension&oauth=success${extensionQuery}`
       : mode === "signup"
-        ? "/dashboard?firstRun=1"
+        ? "/onboarding/role"
         : "/dashboard";
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -173,7 +173,7 @@ export function AuthForm({
       }
     }
 
-    router.push(mode === "signup" ? "/dashboard?firstRun=1" : "/dashboard");
+    router.push(mode === "signup" ? "/onboarding/role" : "/dashboard");
     router.refresh();
   }
 

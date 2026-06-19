@@ -30,5 +30,6 @@ export const webSpeechAskSchema = z.object({
   }),
   question: z.string().min(1).max(1000),
   resumeId: z.string().uuid().optional(),
-  voiceSessionId: z.string().uuid().optional()
+  voiceSessionId: z.string().uuid().optional(),
+  persistTranscript: z.boolean().optional()
 });

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -38,12 +39,14 @@ export function SettingsClient({
   email,
   name,
   initialUsername,
-  initialDisplayName
+  initialDisplayName,
+  initialRole = "candidate"
 }: {
   email?: string | null;
   name?: string | null;
   initialUsername?: string | null;
   initialDisplayName?: string | null;
+  initialRole?: "candidate" | "recruiter";
 }) {
   const [message, setMessage] = useState("");
   const [preferences, setPreferences] = useState<VoicePreferences | null>(null);
@@ -57,6 +60,7 @@ export function SettingsClient({
   const [username, setUsername] = useState(initialUsername ?? "");
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState("");
+  const [role, setRole] = useState<"candidate" | "recruiter">(initialRole);
   const [memory, setMemory] = useState("");
   const [memoryLoaded, setMemoryLoaded] = useState(false);
   const [memorySaving, setMemorySaving] = useState(false);
@@ -115,7 +119,7 @@ export function SettingsClient({
     const res = await fetch("/api/settings/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ display_name: displayName, username: username || undefined })
+      body: JSON.stringify({ display_name: displayName, username: username || undefined, user_role: role })
     });
     const data = await res.json().catch(() => null);
     setProfileMsg(res.ok ? "Saved." : data?.error?.message ?? "Could not save.");
@@ -172,7 +176,7 @@ export function SettingsClient({
     setWorkingId(null);
   }
 
-  const activeVoiceMode = preferences ? "Legacy browser voice available" : "...";
+  const activeVoiceMode = preferences ? "Browser Web Voice available" : "...";
   const brain = credentials
     ? credentials.brainProvider === "platform"
       ? "Platform default"
@@ -189,6 +193,10 @@ export function SettingsClient({
         <CardContent className="grid gap-3 md:grid-cols-2">
           <Input value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Display name" />
           <Input value={username} onChange={(event) => setUsername(event.target.value.toLowerCase())} placeholder="username (lowercase, no spaces)" />
+          <Select value={role} onChange={(event) => setRole(event.target.value === "recruiter" ? "recruiter" : "candidate")}>
+            <option value="candidate">Candidate / General User</option>
+            <option value="recruiter">Recruiter</option>
+          </Select>
           <div className="flex flex-wrap items-center gap-3 md:col-span-2">
             <Button onClick={saveProfile} disabled={profileSaving}>{profileSaving ? "Saving..." : "Save profile"}</Button>
             {profileMsg ? <p className="text-sm text-muted-foreground">{profileMsg}</p> : null}
@@ -244,9 +252,9 @@ export function SettingsClient({
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>AI model and legacy voice</CardTitle></CardHeader>
+          <CardHeader><CardTitle>AI model and browser voice</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <StatusLine label="Legacy voice mode" value={activeVoiceMode} />
+            <StatusLine label="Voice mode" value={activeVoiceMode} />
             <StatusLine label="Brain model" value={brain} />
             <StatusLine label="TypeGPT key" value={credentials?.typegptKeyConfigured ? "Configured" : "Platform default"} />
           </CardContent>

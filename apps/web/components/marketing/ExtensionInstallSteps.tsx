@@ -5,9 +5,9 @@ const steps = [
   "Build with $env:VITE_JOBLENS_API_BASE_URL=\"https://joblenswithai.vercel.app\" then npm run build:extension.",
   "Open chrome://extensions and enable Developer mode.",
   "Click Load unpacked and select apps/extension/dist.",
-  "Pin JobLens Recruiter AI to the toolbar.",
-  "Click the icon, sign in, then visit a job posting.",
-  "Click the floating JobLens button to start analysis."
+  "Pin JobLens AI Browser Copilot to the toolbar.",
+  "Click the icon, sign in, then visit any normal webpage.",
+  "Click the floating JobLens button and ask, \"Summarize this page.\""
 ];
 
 export function ExtensionInstallSteps() {

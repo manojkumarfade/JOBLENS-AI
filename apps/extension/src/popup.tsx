@@ -4,22 +4,24 @@ import { getModelLabel } from "@joblens/shared";
 import { API_BASE_URL } from "./config";
 import { getExtensionToken, loadStartupState } from "./apiClient";
 import type { ExtensionMessage } from "./types/messages";
-import { VOICE_OPTIONS, type VoiceOption } from "./voice/webSpeechController";
+import { speakTestVoice, VOICE_OPTIONS, type VoiceOption } from "./voice/webSpeechController";
 
 function Popup() {
   const [signedIn, setSignedIn] = useState(false);
   const [model, setModel] = useState("Platform Default");
   const [voiceId, setVoiceId] = useState<VoiceOption["id"]>("voice_a");
+  const [voiceDebug, setVoiceDebug] = useState(false);
   const [message, setMessage] = useState("");
   const [syncing, setSyncing] = useState(false);
 
   async function load() {
     const token = await getExtensionToken();
     setSignedIn(Boolean(token));
-    const stored = await chrome.storage.local.get(["voiceId"]);
+    const stored = await chrome.storage.local.get(["voiceId", "voiceDebug"]);
     if (typeof stored.voiceId === "string" && VOICE_OPTIONS.some((option) => option.id === stored.voiceId)) {
       setVoiceId(stored.voiceId as VoiceOption["id"]);
     }
+    setVoiceDebug(stored.voiceDebug === true);
     if (!token) return;
     const state = await loadStartupState().catch(() => null);
     if (state?.credentials?.brainModel) setModel(getModelLabel(state.credentials.brainModel));
@@ -50,6 +52,32 @@ function Popup() {
     setMessage("Voice style updated.");
   }
 
+  async function toggleDebug() {
+    const next = !voiceDebug;
+    setVoiceDebug(next);
+    await chrome.storage.local.set({ voiceDebug: next });
+    setMessage(next ? "Voice debug overlay enabled." : "Voice debug overlay disabled.");
+  }
+
+  async function testMic() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      setMessage("Microphone works. If a site still blocks it, allow mic permission for that site.");
+    } catch {
+      setMessage("Microphone blocked or unavailable. Allow mic permission for this site and use Chrome/Edge.");
+    }
+  }
+
+  async function testVoice() {
+    try {
+      await speakTestVoice(voiceId);
+      setMessage("Voice output works.");
+    } catch {
+      setMessage("Voice output failed. Check browser audio settings.");
+    }
+  }
+
   function openExtensionLogin() {
     const extensionId = encodeURIComponent(chrome.runtime.id);
     chrome.tabs.create({ url: `${API_BASE_URL}/login?from=extension&extensionId=${extensionId}` });
@@ -71,7 +99,7 @@ function Popup() {
     <main>
       <header>
         <div>
-          <h1>JobLens Recruiter AI</h1>
+          <h1>JobLens AI Browser Copilot</h1>
           <p>{signedIn ? "Signed in" : "Not signed in"}</p>
         </div>
         <button type="button" onClick={refresh} disabled={syncing}>{syncing ? "Syncing" : "Sync"}</button>
@@ -82,6 +110,12 @@ function Popup() {
         <p className="mono">{API_BASE_URL}</p>
       </section>
 
+      <section>
+        <h2>Voice mode</h2>
+        <p className="badge">Browser Web Voice</p>
+        <p style={{ marginTop: 8 }}>If mic does not work, allow microphone permission for the current site and use Chrome/Edge.</p>
+      </section>
+
       {!signedIn ? (
         <button className="primary" type="button" onClick={openExtensionLogin}>
           Sign in
@@ -89,12 +123,21 @@ function Popup() {
       ) : null}
 
       <section>
-        <h2>Legacy voice style:</h2>
+        <h2>Voice style:</h2>
         <select value={voiceId} onChange={(event) => changeVoiceStyle(event.target.value as VoiceOption["id"])} disabled={!signedIn}>
           {VOICE_OPTIONS.map((option) => (
             <option key={option.id} value={option.id}>{option.label}</option>
           ))}
         </select>
+      </section>
+
+      <section>
+        <h2>Tests</h2>
+        <div className="links">
+          <button type="button" onClick={testMic} disabled={!signedIn}>Test microphone</button>
+          <button type="button" onClick={testVoice} disabled={!signedIn}>Test voice output</button>
+          <button type="button" onClick={toggleDebug}>{voiceDebug ? "Disable voice debug" : "Enable voice debug"}</button>
+        </div>
       </section>
 
       <section>
@@ -105,6 +148,9 @@ function Popup() {
       <div className="links">
         <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard` })}>
           Open dashboard
+        </button>
+        <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard/candidate` })}>
+          Open browser copilot
         </button>
         <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard/recruiter` })}>
           Open recruiter dashboard

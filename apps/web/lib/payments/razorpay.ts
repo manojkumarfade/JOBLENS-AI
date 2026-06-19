@@ -54,7 +54,7 @@ export async function createRazorpayOrder(input: { userId: string; period: ProBi
     amount: order.amount,
     currency: order.currency,
     keyId,
-    name: "JobLens Recruiter AI Pro",
+    name: "JobLens AI Browser Copilot Pro",
     description: input.period === "monthly" ? "Pro monthly access" : "Pro yearly access",
     period: input.period
   };

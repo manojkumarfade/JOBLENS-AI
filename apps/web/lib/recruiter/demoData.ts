@@ -2,7 +2,7 @@ import type { CandidateProfile, RecruiterJobInput } from "./types";
 
 export const demoJob: RecruiterJobInput = {
   title: "Senior Full Stack Developer / AI Product Engineer",
-  company: "JobLens Recruiter AI",
+  company: "Nimbus Labs",
   location: "Remote / Bengaluru",
   experienceMin: 5,
   experienceMax: 9,

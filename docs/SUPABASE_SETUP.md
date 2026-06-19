@@ -2,7 +2,7 @@
 
 ## About This Project
 
-JobLens Recruiter AI is an AI-powered recruiter candidate ranking and shortlisting POC. The Next.js web app uses Supabase for auth, candidate/job/ranking persistence, resume storage, row-level security, and user settings.
+JobLens AI Browser Copilot uses Supabase for one shared auth system, account profiles, role-based onboarding, personal resume storage, optional saved voice/page history, recruiter candidate pools, recruiter rankings, row-level security, and user settings.
 
 This document covers Supabase configuration for the production deployment at [joblenswithai.vercel.app](https://joblenswithai.vercel.app).
 
@@ -14,7 +14,13 @@ The error below means the app is connected to Supabase, but the JobLens tables h
 PGRST205: Could not find the table 'public.profiles' in the schema cache
 ```
 
-The recruiter dashboard can still show demo candidates with local fallback data, but persistence requires the migrations below.
+The error below means the deployed database is missing newer profile columns:
+
+```text
+PGRST204: Could not find the 'display_name' column of 'profiles' in the schema cache
+```
+
+The app tolerates missing optional profile columns in code, but role onboarding and profile settings work best after applying the profile role migration listed below.
 
 ## Apply Migrations
 
@@ -27,12 +33,29 @@ The recruiter dashboard can still show demo candidates with local fallback data,
    D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606160001_remove_livekit_gemini.sql
    D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606160002_user_features.sql
    D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606190001_recruiter_ranking.sql
+   D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606200001_profile_roles.sql
    ```
 
 4. Go to **Project Settings -> API** and confirm your `.env.local` values match this same project.
-5. Restart the Next.js dev server.
+5. Restart the Next.js dev server or redeploy Vercel.
 
-If the app still shows `PGRST205`, wait a few seconds and refresh. Supabase PostgREST can take a moment to refresh its schema cache.
+If the app still shows schema cache errors, wait a few seconds and refresh. Supabase PostgREST can take a moment to refresh its schema cache.
+
+## Profile Roles
+
+`profiles.user_role` stores the default dashboard role:
+
+- `candidate`: default role for browser copilot, personal resume, and job-fit analysis
+- `recruiter`: default role for recruiter candidate ranking
+
+Recruiter users can still access browser copilot tools. Candidate/general users can still open the recruiter module.
+
+## Personal Resumes vs Recruiter Candidates
+
+- `resumes`: personal resume records for the signed-in candidate/general user
+- `candidates`: recruiter candidate pool records uploaded or entered by a recruiter
+
+Do not mix these concepts. Job-fit analysis uses the user's active row in `resumes`. Recruiter ranking uses the recruiter-owned `candidates` pool.
 
 ## Recruiter Tables
 
@@ -47,6 +70,18 @@ Each table has RLS enabled with owner-only policies:
 ```text
 auth.uid() = user_id
 ```
+
+## Voice And Page History
+
+The Chrome extension sends visible DOM/page text only after the user clicks the floating voice button.
+
+`POST /api/voice/web-speech/ask` defaults `persistTranscript` to `false`, so temporary live transcription and one-off voice questions are not stored by default. Saved voice/page history uses:
+
+- `page_contexts`
+- `voice_sessions`
+- `voice_transcripts`
+
+Only persist these when the caller explicitly requests it.
 
 ## Google Login Setup
 
@@ -97,6 +132,21 @@ CREDENTIALS_ENCRYPTION_KEY=your_base64_value_here
 
 Do not change it after users save BYOK keys unless existing encrypted keys are re-encrypted.
 
-## Legacy Extension Note
+## Extension Setup
 
-The Chrome extension from the earlier product iteration is kept buildable for compatibility. The current evaluation path is the web recruiter dashboard at `/dashboard/recruiter`.
+The Chrome extension is part of the core browser copilot product.
+
+Build against production:
+
+```powershell
+$env:VITE_JOBLENS_API_BASE_URL="https://joblenswithai.vercel.app"
+npm run build:extension
+```
+
+Then load:
+
+```text
+D:\Joblens Voice Assistant\JOBLENS\apps\extension\dist
+```
+
+from `chrome://extensions` with Developer mode enabled.

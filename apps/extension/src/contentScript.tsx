@@ -32,7 +32,11 @@ function JobLensContentApp() {
   const [authLoaded, setAuthLoaded] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [conversationState, setConversationState] = useState<ConversationState>("idle");
-  const [userTranscript, setUserTranscript] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [finalTranscript, setFinalTranscript] = useState("");
+  const [assistantSubtitle, setAssistantSubtitle] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [debugMessage, setDebugMessage] = useState("");
   const [voiceSessionId, setVoiceSessionId] = useState<string>();
   const conversationRef = useRef<ConversationHandle | null>(null);
 
@@ -52,7 +56,7 @@ function JobLensContentApp() {
       }
       if (incoming.type === "ERROR") {
         setConversationState("error");
-        setUserTranscript(incoming.payload.message);
+        setErrorMessage(incoming.payload.message);
       }
     };
 
@@ -76,10 +80,11 @@ function JobLensContentApp() {
   }, []);
 
   async function loadVoiceSettings() {
-    const stored = await chrome.storage.local.get(["voiceId", "voiceSessionId"]);
+    const stored = await chrome.storage.local.get(["voiceId", "voiceSessionId", "voiceDebug"]);
     return {
       voiceId: (stored.voiceId as VoiceOption["id"] | undefined) ?? "voice_a",
-      voiceSessionId: (stored.voiceSessionId as string | undefined) ?? voiceSessionId
+      voiceSessionId: (stored.voiceSessionId as string | undefined) ?? voiceSessionId,
+      debug: stored.voiceDebug === true
     };
   }
 
@@ -87,7 +92,11 @@ function JobLensContentApp() {
     conversationRef.current?.stop();
     conversationRef.current = null;
     setConversationState("idle");
-    setUserTranscript("");
+    setInterimTranscript("");
+    setFinalTranscript("");
+    setAssistantSubtitle("");
+    setErrorMessage("");
+    setDebugMessage("");
   }
 
   async function onFabClick() {
@@ -98,36 +107,51 @@ function JobLensContentApp() {
     }
 
     setConversationState("preparing");
-    setUserTranscript("");
+    setInterimTranscript("");
+    setFinalTranscript("");
+    setAssistantSubtitle("");
+    setErrorMessage("");
+    setDebugMessage("");
     const page: ExtractedPageContext = extractPageContext();
-    const settings = await loadVoiceSettings().catch(() => ({ voiceId: "voice_a" as const, voiceSessionId }));
+    const settings = await loadVoiceSettings().catch(() => ({ voiceId: "voice_a" as const, voiceSessionId, debug: false }));
 
     conversationRef.current = startConversation(
       page,
       {
         onState(state, detail) {
           setConversationState(state);
-          if (state === "speaking" || state === "ended" || state === "idle") {
-            setUserTranscript("");
+          if (detail && state !== "error") setDebugMessage(detail);
+          if (state === "ended" || state === "idle") {
+            setInterimTranscript("");
+            setFinalTranscript("");
+            setAssistantSubtitle("");
+            setErrorMessage("");
           } else if (state === "error" && detail) {
-            setUserTranscript(detail);
+            setErrorMessage(detail);
           }
           if (state === "ended" || state === "error") {
             conversationRef.current = null;
           }
         },
-        onUserTranscript(text) {
-          setUserTranscript(text);
+        onTranscript(update) {
+          setInterimTranscript(update.interimTranscript);
+          setFinalTranscript(update.finalTranscript);
+        },
+        onAssistantSubtitle(text) {
+          setAssistantSubtitle(text);
         },
         onSessionId(id) {
           setVoiceSessionId(id);
           void chrome.storage.local.set({ voiceSessionId: id });
         },
+        onDebug(message) {
+          setDebugMessage(message);
+        },
         onError(message) {
-          setUserTranscript(message);
+          setErrorMessage(message);
         }
       },
-      { voiceId: settings.voiceId, voiceSessionId: settings.voiceSessionId }
+      { voiceId: settings.voiceId, voiceSessionId: settings.voiceSessionId, debug: settings.debug }
     );
   }
 
@@ -139,7 +163,14 @@ function JobLensContentApp() {
 
   return (
     <>
-      <TranscriptOverlay state={conversationState} userTranscript={userTranscript} />
+      <TranscriptOverlay
+        state={conversationState}
+        interimTranscript={interimTranscript}
+        finalTranscript={finalTranscript}
+        assistantSubtitle={assistantSubtitle}
+        errorMessage={errorMessage}
+        debugMessage={debugMessage}
+      />
       <FloatingButton
         state={conversationState}
         active={conversationRef.current !== null}

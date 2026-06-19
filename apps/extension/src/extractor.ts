@@ -30,7 +30,13 @@ const NOISE_SELECTORS = [
   "[class*='advert' i]",
   "script",
   "style",
-  "noscript"
+  "noscript",
+  "input",
+  "textarea",
+  "select",
+  "button",
+  "[contenteditable='true']",
+  "[type='password']"
 ];
 
 function stripNoise(root: HTMLElement): HTMLElement {
@@ -69,6 +75,33 @@ function computeConfidence(text: string, headings: string[], isTargeted: boolean
   return Math.max(0.1, Math.min(0.97, keywordScore + lengthScore + targetBonus));
 }
 
+function inferSourceType(text: string, headings: string[], isTargeted: boolean): ExtractedPageContext["sourceType"] {
+  const haystack = `${document.title} ${headings.join(" ")} ${text}`.toLowerCase();
+  const jobScore = [
+    "responsibilities",
+    "requirements",
+    "qualifications",
+    "experience",
+    "salary",
+    "benefits",
+    "apply now",
+    "job description"
+  ].filter((term) => haystack.includes(term)).length;
+  const recruiterScore = [
+    "candidate",
+    "candidates",
+    "shortlist",
+    "recruiter",
+    "applicant",
+    "resume",
+    "cv",
+    "pipeline"
+  ].filter((term) => haystack.includes(term)).length;
+  if (recruiterScore >= 3 && !isTargeted) return "recruiter_page";
+  if (isTargeted || jobScore >= 3) return "job_page";
+  return text.length > 120 ? "general_page" : "unknown";
+}
+
 function inferJobIdentity(headings: string[], text: string) {
   const likelyJobTitle = headings[0] || document.title.split("|")[0]?.split("-")[0]?.trim() || undefined;
   const companyPatterns = [
@@ -91,11 +124,12 @@ export function extractPageContext(): ExtractedPageContext {
   const text = isTargeted && element ? getText(element) : getText(stripNoise(document.body));
   const confidence = computeConfidence(text, headings, isTargeted);
   const { likelyJobTitle, likelyCompany } = inferJobIdentity(headings, text);
+  const sourceType = inferSourceType(text, headings, isTargeted);
 
   return {
     url: window.location.href,
     title: document.title,
-    sourceType: confidence > 0.35 ? "job_page" : "unknown",
+    sourceType,
     extractedAt: new Date().toISOString(),
     text,
     headings,
