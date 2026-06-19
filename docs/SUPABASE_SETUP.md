@@ -2,21 +2,9 @@
 
 ## About This Project
 
-**JobLens Voice** is a voice-first AI career copilot. It lives as a Chrome extension — you open it on any job listing page, click a floating button, and speak naturally with an AI that understands the job, knows your resume, and can analyze fit, answer questions, and suggest improvements. The extension works with a Next.js web backend (Supabase auth + database, TypeGPT AI, Razorpay billing) and syncs data via a shared web dashboard at `/dashboard`.
+JobLens Recruiter AI is an AI-powered recruiter candidate ranking and shortlisting POC. The Next.js web app uses Supabase for auth, candidate/job/ranking persistence, resume storage, row-level security, and user settings.
 
 This document covers Supabase configuration for the production deployment at [joblenswithai.vercel.app](https://joblenswithai.vercel.app).
-
-## Installing the Chrome Extension
-
-1. Go to [joblenswithai.vercel.app/install-extension](https://joblenswithai.vercel.app/install-extension)
-2. Download the extension ZIP file.
-3. Unzip the file on your computer.
-4. Open `chrome://extensions` in your browser.
-5. Enable **Developer mode** (toggle in the top-right corner).
-6. Click **Load unpacked** and select the unzipped folder.
-7. The JobLens Voice extension icon will appear in your toolbar.
-8. Navigate to any job listing on LinkedIn, Indeed, or similar sites.
-9. Click the extension icon to sign in, then click the floating voice button on the page to start.
 
 ## Quick Start
 
@@ -26,23 +14,39 @@ The error below means the app is connected to Supabase, but the JobLens tables h
 PGRST205: Could not find the table 'public.profiles' in the schema cache
 ```
 
-## Apply The Migration
+The recruiter dashboard can still show demo candidates with local fallback data, but persistence requires the migrations below.
+
+## Apply Migrations
 
 1. Open your Supabase project dashboard.
 2. Go to **SQL Editor**.
-3. Open this local file:
+3. Run these local files in order:
 
    ```text
    D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606150001_initial_schema.sql
+   D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606160001_remove_livekit_gemini.sql
+   D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606160002_user_features.sql
+   D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606190001_recruiter_ranking.sql
    ```
 
-4. Copy the full SQL contents.
-5. Paste into Supabase SQL Editor.
-6. Click **Run**.
-7. Go to **Project Settings -> API** and confirm your `.env.local` values match this same project.
-8. Restart the Next.js dev server.
+4. Go to **Project Settings -> API** and confirm your `.env.local` values match this same project.
+5. Restart the Next.js dev server.
 
 If the app still shows `PGRST205`, wait a few seconds and refresh. Supabase PostgREST can take a moment to refresh its schema cache.
+
+## Recruiter Tables
+
+The recruiter migration creates:
+
+- `jobs`
+- `candidates`
+- `candidate_rankings`
+
+Each table has RLS enabled with owner-only policies:
+
+```text
+auth.uid() = user_id
+```
 
 ## Google Login Setup
 
@@ -55,7 +59,7 @@ If the app still shows `PGRST205`, wait a few seconds and refresh. Supabase Post
    https://<your-supabase-project-ref>.supabase.co/auth/v1/callback
    ```
 
-5. In Supabase **Authentication -> URL Configuration**, add these site/redirect URLs for local development:
+5. In Supabase **Authentication -> URL Configuration**, add these site/redirect URLs:
 
    ```text
    https://joblenswithai.vercel.app
@@ -63,28 +67,11 @@ If the app still shows `PGRST205`, wait a few seconds and refresh. Supabase Post
    https://joblenswithai.vercel.app/login?from=extension
    ```
 
-For local development, make sure this value is also set in `apps/web/.env.local`:
+For local development, set:
 
 ```env
-NEXT_PUBLIC_APP_URL=https://joblenswithai.vercel.app
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
-
-If extension login sends you to `https://your-domain.vercel.app/login?from=extension&oauth=success`, the local app URL is still set to the placeholder somewhere. Replace that placeholder with your local URL for development, or with your real deployed domain in production.
-
-If the login page says "You're signed in" but the extension popup still shows "Not signed in", rebuild and reload the unpacked extension:
-
-```powershell
-npm run build:extension
-```
-
-Then open `chrome://extensions`, enable Developer mode, click **Reload** on JobLens Voice, and sign in again from the extension popup. The popup passes its extension ID to the login page, and the login page sends the extension token directly to the extension background worker.
-
-## Email Limit Exceeded
-
-Supabase hosted email has rate limits. If you see "email limit exceeded" while signing up or logging in:
-
-- Use Google login during local testing.
-- Or configure a custom SMTP provider in Supabase Authentication email settings.
 
 ## Encryption Key
 
@@ -98,7 +85,7 @@ $bytes = New-Object byte[] 32
 [Convert]::ToBase64String($bytes)
 ```
 
-Put the output in:
+Put the output in your local environment file:
 
 ```text
 D:\Joblens Voice Assistant\JOBLENS\apps\web\.env.local
@@ -109,3 +96,7 @@ CREDENTIALS_ENCRYPTION_KEY=your_base64_value_here
 ```
 
 Do not change it after users save BYOK keys unless existing encrypted keys are re-encrypted.
+
+## Legacy Extension Note
+
+The Chrome extension from the earlier product iteration is kept buildable for compatibility. The current evaluation path is the web recruiter dashboard at `/dashboard/recruiter`.

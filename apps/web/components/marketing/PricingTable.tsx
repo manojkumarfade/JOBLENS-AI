@@ -7,14 +7,14 @@ const plans = [
   {
     name: "Free",
     price: "Rs 0",
-    description: "Start with voice conversation and core job analysis.",
-    features: ["Voice conversation (Web Speech)", "Limited analyses/month", "Resume upload", "Saved analyses"]
+    description: "Start with recruiter ranking, demo candidates, and core job analysis.",
+    features: ["Recruiter ranking dashboard", "Demo candidate pool", "Resume upload", "Saved analyses"]
   },
   {
     name: "Pro",
     price: "Rs 400/month",
-    description: "More room and faster responses for active searches.",
-    features: ["Higher monthly limits", "Priority TypeGPT models", "Faster responses"]
+    description: "More room and faster responses for active recruiting workflows.",
+    features: ["Higher monthly limits", "Priority TypeGPT models", "Faster ranking explanations"]
   },
   {
     name: "BYOK",
@@ -54,7 +54,7 @@ export function PricingTable({ compact = false }: { compact?: boolean }) {
                 <RazorpayCheckoutButton period="monthly" className="w-full rounded-full">Pay Rs 400/month</RazorpayCheckoutButton>
               ) : (
                 <Button asChild variant="outline" className="w-full rounded-full">
-                  <Link href={plan.name === "Free" ? "/install-extension" : "/dashboard/settings/voice"}>
+                  <Link href={plan.name === "Free" ? "/dashboard/recruiter" : "/dashboard/settings/voice"}>
                     {plan.name === "Free" ? "Start free" : "Configure BYOK"}
                   </Link>
                 </Button>

@@ -8,7 +8,7 @@ export function WebSpeechTester({ rate, pitch }: { rate: number; pitch: number }
       type="button"
       variant="outline"
       onClick={() => {
-        const utterance = new SpeechSynthesisUtterance("JobLens Voice is ready.");
+        const utterance = new SpeechSynthesisUtterance("JobLens Recruiter AI is ready.");
         utterance.rate = rate;
         utterance.pitch = pitch;
         speechSynthesis.speak(utterance);

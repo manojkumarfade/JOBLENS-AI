@@ -8,5 +8,5 @@ export function isMissingSupabaseSchemaError(error: unknown) {
 }
 
 export function supabaseSetupMessage() {
-  return "Supabase tables are not created yet. Apply supabase/migrations/202606150001_initial_schema.sql in the Supabase SQL Editor, then restart the app.";
+  return "Supabase tables are not created yet. Apply supabase/migrations/202606150001_initial_schema.sql and supabase/migrations/202606190001_recruiter_ranking.sql in the Supabase SQL Editor, then restart the app.";
 }

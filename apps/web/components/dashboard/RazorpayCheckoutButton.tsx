@@ -59,7 +59,7 @@ export function RazorpayCheckoutButton({
       key: order.keyId,
       amount: order.amount,
       currency: order.currency,
-      name: "JobLens Voice",
+      name: "JobLens Recruiter AI",
       description: order.description,
       order_id: order.orderId,
       theme: { color: "#4c9a68" },

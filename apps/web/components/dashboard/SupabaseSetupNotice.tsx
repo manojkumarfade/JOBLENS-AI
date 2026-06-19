@@ -20,11 +20,11 @@ export function SupabaseSetupNotice({ detail }: { detail?: string }) {
             </p>
             {detail ? <p className="rounded-md border bg-muted p-3 text-foreground">{detail}</p> : null}
             <p>
-              Open Supabase SQL Editor and run `supabase/migrations/202606150001_initial_schema.sql`, then restart the dev server.
+              Open Supabase SQL Editor and run the initial schema migration plus `supabase/migrations/202606190001_recruiter_ranking.sql`, then restart the dev server.
             </p>
             <div className="flex flex-wrap gap-2">
               <Button asChild>
-                <Link href="/install-extension">Back to public pages</Link>
+                <Link href="/">Back to public pages</Link>
               </Button>
               <Button asChild variant="outline">
                 <Link href="/supabase-setup">

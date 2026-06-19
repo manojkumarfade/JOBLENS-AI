@@ -8,13 +8,13 @@ export default function InstallExtensionPage() {
       <main className="mx-auto max-w-6xl px-4 py-16">
         <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <h1 className="text-4xl font-semibold">Install the private beta extension.</h1>
+            <h1 className="text-4xl font-semibold">Install the legacy private beta extension.</h1>
             <p className="mt-4 text-lg leading-8 text-muted-foreground">
-              Load the unpacked extension locally, pin it, sign in, then click the floating button on a job page.
+              The current core product is the recruiter dashboard. The extension remains available for earlier browser-assisted job analysis workflows.
             </p>
           </div>
           <div className="overflow-hidden rounded-lg border bg-card">
-            <Image src="/joblens-product-mockup.png" alt="JobLens Voice extension preview" width={1400} height={900} className="h-auto w-full" />
+            <Image src="/joblens-product-mockup.png" alt="JobLens Recruiter AI legacy extension preview" width={1400} height={900} className="h-auto w-full" />
           </div>
         </div>
         <div className="mt-12">

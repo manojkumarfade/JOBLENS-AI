@@ -1,3 +1,4 @@
--- RLS policies live in `migrations/202606150001_initial_schema.sql` so a fresh
--- Supabase project can be bootstrapped in one pass. This file exists as the
--- named policy reference requested by the implementation spec.
+-- RLS policies live in the migrations so a fresh Supabase project can be
+-- bootstrapped in order:
+-- - 202606150001_initial_schema.sql for core app tables
+-- - 202606190001_recruiter_ranking.sql for recruiter jobs, candidates, rankings

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, CreditCard, FileText, Home, Mic, Settings } from "lucide-react";
+import { BarChart3, CreditCard, FileText, Home, Settings, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,9 +7,10 @@ import { cn } from "@/lib/utils";
 
 const items = [
   { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/dashboard/resume", label: "Resume", icon: FileText },
+  { href: "/dashboard/recruiter", label: "Recruiter", icon: Sparkles },
+  { href: "/dashboard/resume", label: "Resumes", icon: FileText },
   { href: "/dashboard/analyses", label: "Analyses", icon: BarChart3 },
-  { href: "/dashboard/settings/voice", label: "Voice", icon: Mic },
+  { href: "/dashboard/settings/voice", label: "AI", icon: Settings },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard }
 ];
 
@@ -18,7 +19,7 @@ export function DashboardNav({ plan = "free" }: { plan?: string | null }) {
     <>
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r bg-background p-4 md:flex md:flex-col">
         <div className="mb-8 flex items-center justify-between">
-          <Link href="/dashboard" className="text-lg font-semibold">JobLens Voice</Link>
+          <Link href="/dashboard/recruiter" className="text-lg font-semibold">JobLens Recruiter AI</Link>
           <Badge variant="secondary">{plan}</Badge>
         </div>
         <nav className="space-y-1">
@@ -38,7 +39,7 @@ export function DashboardNav({ plan = "free" }: { plan?: string | null }) {
           </Button>
         </div>
       </aside>
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t bg-background md:hidden">
         {items.map((item) => {
           const Icon = item.icon;
           return (

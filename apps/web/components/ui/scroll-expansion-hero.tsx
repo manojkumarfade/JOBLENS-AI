@@ -21,7 +21,7 @@ export default function ScrollExpandMedia({
   mediaSrc,
   posterSrc,
   bgImageSrc,
-  title = "JobLens Voice",
+  title = "JobLens Recruiter AI",
   date,
   scrollToExpand,
   textBlend,

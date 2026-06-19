@@ -71,7 +71,7 @@ function Popup() {
     <main>
       <header>
         <div>
-          <h1>JobLens Voice</h1>
+          <h1>JobLens Recruiter AI</h1>
           <p>{signedIn ? "Signed in" : "Not signed in"}</p>
         </div>
         <button type="button" onClick={refresh} disabled={syncing}>{syncing ? "Syncing" : "Sync"}</button>
@@ -89,7 +89,7 @@ function Popup() {
       ) : null}
 
       <section>
-        <h2>Voice style:</h2>
+        <h2>Legacy voice style:</h2>
         <select value={voiceId} onChange={(event) => changeVoiceStyle(event.target.value as VoiceOption["id"])} disabled={!signedIn}>
           {VOICE_OPTIONS.map((option) => (
             <option key={option.id} value={option.id}>{option.label}</option>
@@ -106,8 +106,11 @@ function Popup() {
         <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard` })}>
           Open dashboard
         </button>
+        <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard/recruiter` })}>
+          Open recruiter dashboard
+        </button>
         <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard/settings/voice` })}>
-          Open voice settings
+          Open AI settings
         </button>
         {signedIn ? <button type="button" onClick={signOut}>Sign out / clear token</button> : null}
       </div>

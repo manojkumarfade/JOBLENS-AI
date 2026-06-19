@@ -101,7 +101,7 @@ export function VoiceSettingsForm() {
   return (
     <div className="space-y-6">
       <div className="rounded-lg border bg-card p-4 text-sm">
-        <span className="font-medium">Active:</span> Voice Conversation · Brain:{" "}
+        <span className="font-medium">Active recruiter AI brain:</span>{" "}
         {currentCredentials.brainProvider === "platform" ? "Platform Default" : getModelLabel(currentCredentials.brainModel)}
         {currentCredentials.typegptKeyConfigured ? " (your TypeGPT key available)" : ""}
       </div>
@@ -153,7 +153,7 @@ export function VoiceSettingsForm() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Speech Behavior</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Legacy speech behavior</CardTitle></CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Language</Label>
@@ -176,7 +176,7 @@ export function VoiceSettingsForm() {
             <Input type="number" min="0" max="2" step="0.1" value={currentPreferences.speechPitch} onChange={(event) => setPreferences({ ...currentPreferences, speechPitch: Number(event.target.value) })} />
           </div>
           <p className="rounded-md border bg-muted p-3 text-sm text-muted-foreground md:col-span-2">
-            JobLens uses browser speech recognition and speech synthesis for voice conversation.
+            Legacy browser speech remains available for earlier extension workflows, but the core product path is recruiter-side ranking and shortlisting.
           </p>
         </CardContent>
       </Card>

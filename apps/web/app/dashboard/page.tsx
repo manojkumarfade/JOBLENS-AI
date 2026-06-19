@@ -24,21 +24,24 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold">Welcome{profile?.full_name ? `, ${profile.full_name}` : ""}</h1>
-        <p className="mt-2 text-muted-foreground">Plan: {profile?.plan ?? "free"}</p>
+        <p className="mt-2 text-muted-foreground">JobLens Recruiter AI helps you rank candidates with explainable, multi-signal scoring. Plan: {profile?.plan ?? "free"}</p>
       </div>
       {!resume ? (
         <Card>
-          <CardHeader><CardTitle>Upload your resume to unlock matching and tailoring</CardTitle></CardHeader>
-          <CardContent><Button asChild><Link href="/dashboard/resume">Upload resume</Link></Button></CardContent>
+          <CardHeader><CardTitle>Start with the recruiter ranking dashboard</CardTitle></CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <Button asChild><Link href="/dashboard/recruiter">Try Recruiter Dashboard</Link></Button>
+            <Button asChild variant="outline"><Link href="/dashboard/resume">Manage legacy resumes</Link></Button>
+          </CardContent>
         </Card>
       ) : null}
       <UsageMeter used={analyses.length} limit={limit} plan={profile?.plan} />
       <div className="grid gap-4 md:grid-cols-4">
         {[
-          ["/dashboard/resume", "Upload resume"],
+          ["/dashboard/recruiter", "Rank candidates"],
+          ["/dashboard/resume", "Candidate resumes"],
           ["/dashboard/analyses", "View analyses"],
-          ["/dashboard/settings/voice", "Voice settings"],
-          ["/install-extension", "Install extension"]
+          ["/dashboard/settings/voice", "AI settings"]
         ].map(([href, label]) => (
           <Button key={href} asChild variant="outline"><Link href={href}>{label}</Link></Button>
         ))}

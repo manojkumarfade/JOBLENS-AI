@@ -1,2 +1,4 @@
--- Seed intentionally empty for v1. Profiles, voice preferences, model
--- credentials, and subscriptions are created by the auth trigger.
+-- Seed intentionally empty. Profiles, model credentials, subscriptions, and
+-- legacy voice preferences are created by auth triggers.
+-- Recruiter demo jobs/candidates live in apps/web/lib/recruiter/demoData.ts so
+-- evaluators can use the dashboard before applying recruiter persistence tables.

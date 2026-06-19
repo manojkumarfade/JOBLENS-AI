@@ -172,7 +172,7 @@ export function SettingsClient({
     setWorkingId(null);
   }
 
-  const activeVoiceMode = preferences ? "Voice Conversation" : "...";
+  const activeVoiceMode = preferences ? "Legacy browser voice available" : "...";
   const brain = credentials
     ? credentials.brainProvider === "platform"
       ? "Platform default"
@@ -226,7 +226,7 @@ export function SettingsClient({
         <CardHeader><CardTitle>Preferences</CardTitle></CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3">
           <ThemeToggle />
-          <Button asChild variant="outline"><Link href="/dashboard/settings/voice">Voice settings</Link></Button>
+          <Button asChild variant="outline"><Link href="/dashboard/settings/voice">AI settings</Link></Button>
           <Button asChild variant="outline"><Link href="/dashboard/billing">Billing</Link></Button>
           <Button asChild variant="outline"><Link href="/dashboard/resume">Manage resumes</Link></Button>
         </CardContent>
@@ -244,9 +244,9 @@ export function SettingsClient({
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Voice and models</CardTitle></CardHeader>
+          <CardHeader><CardTitle>AI model and legacy voice</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <StatusLine label="Active voice mode" value={activeVoiceMode} />
+            <StatusLine label="Legacy voice mode" value={activeVoiceMode} />
             <StatusLine label="Brain model" value={brain} />
             <StatusLine label="TypeGPT key" value={credentials?.typegptKeyConfigured ? "Configured" : "Platform default"} />
           </CardContent>

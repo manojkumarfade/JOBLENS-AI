@@ -1,11 +1,11 @@
-const categories = ["General", "Voice", "Privacy", "Billing"];
+const categories = ["General", "Ranking", "Privacy", "Billing"];
 
 const faqs = [
-  ["What does JobLens actually read from a job page?", "Only the visible text after you click the floating button; nothing is read automatically."],
-  ["How does the voice assistant work?", "It uses browser speech recognition and speech synthesis. There is no call or telephony layer involved."],
-  ["Is my resume data private?", "Resume data is stored with row-level security, only you can access it, and you can delete it from settings."],
+  ["What does JobLens rank?", "It ranks candidate profiles or parsed resumes against recruiter-provided job criteria using multiple evidence signals."],
+  ["Does JobLens automatically reject candidates?", "No. It produces decision-support rankings and explanations for human recruiter review."],
+  ["Is candidate data private?", "Candidate and resume data is stored with row-level security, only you can access it, and you can delete it from settings."],
   ["What is BYOK?", "Bring your own TypeGPT API key for unlimited usage. The key is encrypted at rest and never shown again after saving."],
-  ["Can JobLens apply to jobs for me?", "No. JobLens helps you understand and prepare; you stay in control of every application."]
+  ["Does ranking use protected attributes?", "No. The ranking path is designed around job criteria, candidate evidence, and explicit fairness guardrails."]
 ];
 
 export function FaqAccordion() {

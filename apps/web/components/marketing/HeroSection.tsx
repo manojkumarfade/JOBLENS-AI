@@ -19,7 +19,7 @@ export function HeroSection() {
         </div>
         <div className="space-y-5">
           <h1 className="animate-fade-up font-display text-5xl font-bold leading-[1.02] tracking-normal opacity-0 md:text-6xl [animation-delay:160ms]">
-            Read less. Know more. Apply smarter.
+            Rank candidates with evidence, not guesswork.
           </h1>
           <p className="max-w-2xl animate-fade-up text-lg leading-8 text-muted-foreground opacity-0 [animation-delay:260ms]">
             JobLens reads the job page after you click, compares it against your real resume, and answers your questions out loud: summarize, match score, missing skills, tailored bullets.
@@ -40,7 +40,7 @@ export function HeroSection() {
               </span>
             ))}
           </div>
-          <p className="max-w-xs text-sm text-muted-foreground">Used by job seekers preparing for their next role</p>
+          <p className="max-w-xs text-sm text-muted-foreground">Built for recruiters reviewing candidate fit</p>
         </div>
       </div>
       <div className="animate-fade-up opacity-0 [animation-delay:560ms]">
