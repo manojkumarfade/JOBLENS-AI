@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { errorResponse, handleRouteError, json, readJson } from "@/lib/api";
 import { getAuthenticatedUser } from "@/lib/auth/session";
+import { upsertSubscriptionCompat } from "@/lib/data/subscriptions";
 import { verifyRazorpayCheckoutSignature } from "@/lib/payments/razorpay";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
@@ -23,19 +24,14 @@ export async function POST(request: Request) {
     currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + (body.period === "monthly" ? 1 : 12));
 
     const supabase = createSupabaseServiceClient();
-    await supabase
-      .from("subscriptions")
-      .upsert(
-        {
-          user_id: user.id,
-          plan: "pro",
-          status: "active",
-          razorpay_subscription_id: body.razorpayPaymentId,
-          portal_url: null,
-          current_period_end: currentPeriodEnd.toISOString()
-        },
-        { onConflict: "user_id" }
-      );
+    await upsertSubscriptionCompat({
+      user_id: user.id,
+      plan: "pro",
+      status: "active",
+      razorpay_subscription_id: body.razorpayPaymentId,
+      portal_url: null,
+      current_period_end: currentPeriodEnd.toISOString()
+    });
     await supabase.from("profiles").update({ plan: "pro" }).eq("id", user.id);
 
     return json({ ok: true, plan: "pro", currentPeriodEnd: currentPeriodEnd.toISOString() });

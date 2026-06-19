@@ -13,6 +13,8 @@ export interface ProfileView {
   user_role: UserRole;
   created_at: string | null;
   hasRoleColumn: boolean;
+  candidate_tutorial_seen_at: string | null;
+  recruiter_tutorial_seen_at: string | null;
 }
 
 type ProfileRow = Record<string, unknown>;
@@ -98,7 +100,9 @@ export function mapProfile(row: ProfileRow): ProfileView {
     plan: typeof row.plan === "string" ? row.plan : "free",
     user_role: role,
     created_at: typeof row.created_at === "string" ? row.created_at : null,
-    hasRoleColumn: Object.prototype.hasOwnProperty.call(row, "user_role")
+    hasRoleColumn: Object.prototype.hasOwnProperty.call(row, "user_role"),
+    candidate_tutorial_seen_at: typeof row.candidate_tutorial_seen_at === "string" ? row.candidate_tutorial_seen_at : null,
+    recruiter_tutorial_seen_at: typeof row.recruiter_tutorial_seen_at === "string" ? row.recruiter_tutorial_seen_at : null
   };
 }
 

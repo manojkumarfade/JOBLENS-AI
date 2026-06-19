@@ -1,18 +1,12 @@
 import { errorResponse, handleRouteError, json } from "@/lib/api";
 import { getAuthenticatedUser } from "@/lib/auth/session";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { getSubscription } from "@/lib/data/subscriptions";
 
 export async function GET(request: Request) {
   try {
     const user = await getAuthenticatedUser(request);
     if (!user) return errorResponse("AUTH_REQUIRED", "Sign in first.", 401);
-    const supabase = createSupabaseServiceClient();
-    const { data, error } = await supabase
-      .from("subscriptions")
-      .select("plan,current_period_end,portal_url,status")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (error) throw error;
+    const data = await getSubscription(user.id);
     return json({
       plan: data?.plan ?? "free",
       status: data?.status ?? "inactive",

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { errorResponse, handleRouteError, json, readJson } from "@/lib/api";
 import { callBrainModel, ModelCredentialsError } from "@/lib/ai/modelRouter";
 import { parseModelJson } from "@/lib/ai/json";
-import { getAuthenticatedUser } from "@/lib/auth/session";
+import { requireApiRole } from "@/lib/auth/roles";
 import { globalSystemPrompt, resumeTailoringPrompt } from "@/lib/prompts/templates";
 import { sanitizeJobText } from "@/lib/security/sanitize";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
@@ -15,8 +15,9 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const user = await getAuthenticatedUser(request);
-    if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to tailor resumes.", 401);
+    const auth = await requireApiRole(request, "candidate");
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
     const body = schema.parse(await readJson(request));
     const supabase = createSupabaseServiceClient();
     const [{ data: resume, error: resumeError }, { data: page, error: pageError }, { data: memoryRow }] = await Promise.all([

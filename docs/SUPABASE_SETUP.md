@@ -34,6 +34,7 @@ The app tolerates missing optional profile columns in code, but role onboarding 
    D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606160002_user_features.sql
    D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606190001_recruiter_ranking.sql
    D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606200001_profile_roles.sql
+   D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606200002_role_billing_extension_links.sql
    ```
 
 4. Go to **Project Settings -> API** and confirm your `.env.local` values match this same project.
@@ -48,7 +49,7 @@ If the app still shows schema cache errors, wait a few seconds and refresh. Supa
 - `candidate`: default role for browser copilot, personal resume, and job-fit analysis
 - `recruiter`: default role for recruiter candidate ranking
 
-Recruiter users can still access browser copilot tools. Candidate/general users can still open the recruiter module.
+Role access is strict in protected routes and APIs. Candidate users use personal resume, Browser Copilot, extension, and saved analysis features. Recruiter users use recruiter jobs, candidates, and rankings.
 
 ## Personal Resumes vs Recruiter Candidates
 
@@ -134,7 +135,7 @@ Do not change it after users save BYOK keys unless existing encrypted keys are r
 
 ## Extension Setup
 
-The Chrome extension is part of the core browser copilot product.
+The Chrome extension is part of the core browser copilot product and is candidate-only.
 
 Build against production:
 
@@ -150,3 +151,16 @@ D:\Joblens Voice Assistant\JOBLENS\apps\extension\dist
 ```
 
 from `chrome://extensions` with Developer mode enabled.
+
+After loading the extension:
+
+1. Open the extension popup.
+2. Copy the displayed Chrome extension ID.
+3. Paste it into the candidate dashboard or settings panel under linked extensions.
+4. Sign in from the extension popup.
+
+The backend only issues extension tokens for active extension IDs linked to the signed-in candidate user.
+
+## Demo Data Note
+
+`supabase/seed.sql` is intentionally empty and does not insert demo emails or demo resumes. Recruiter demo candidates are local fallback data in the web app only, so evaluators can rank candidates before recruiter persistence tables are applied.

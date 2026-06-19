@@ -1,6 +1,13 @@
+import { redirect } from "next/navigation";
 import { VoiceSettingsForm } from "@/components/voice/VoiceSettingsForm";
+import { getRoleForUser } from "@/lib/auth/roles";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 
-export default function VoiceSettingsPage() {
+export default async function VoiceSettingsPage() {
+  const user = await getAuthenticatedUser();
+  if (!user) redirect("/login");
+  const role = await getRoleForUser(user.id);
+  if (role !== "candidate") redirect("/dashboard/recruiter");
   return (
     <div className="space-y-6">
       <div>

@@ -25,11 +25,13 @@ type ChromeRuntimeBridge = {
 export function AuthForm({
   mode,
   fromExtension = false,
-  extensionId
+  extensionId,
+  nextPath
 }: {
   mode: "login" | "signup";
   fromExtension?: boolean;
   extensionId?: string;
+  nextPath?: string;
 }) {
   const supabase = createSupabaseBrowserClient();
   const router = useRouter();
@@ -51,10 +53,14 @@ export function AuthForm({
   }, [fromExtension]);
 
   async function sendExtensionToken(accessToken: string) {
+    if (!extensionId) {
+      setMessage("Missing extension ID. Reopen the JobLens extension popup and start sign-in again.");
+      return true;
+    }
     const exchange = await fetch("/api/extension-auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ supabaseAccessToken: accessToken })
+      body: JSON.stringify({ supabaseAccessToken: accessToken, extensionId })
     });
     if (exchange.ok) {
       const body = await exchange.json();
@@ -75,7 +81,9 @@ export function AuthForm({
       setMessage("You're signed in - reopen the JobLens extension popup. If it still shows signed out, reload the unpacked extension.");
       return true;
     }
-    return false;
+    const body = await exchange.json().catch(() => null);
+    setMessage(body?.error?.message ?? "Could not link this extension. Add the extension ID in your candidate dashboard, then try again.");
+    return true;
   }
 
   async function sendTokenDirectlyToExtension(extensionToken: string, expiresAt?: string) {
@@ -118,7 +126,7 @@ export function AuthForm({
       ? `/login?from=extension&oauth=success${extensionQuery}`
       : mode === "signup"
         ? "/onboarding/role"
-        : "/dashboard";
+        : nextPath ?? "/dashboard";
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -173,7 +181,7 @@ export function AuthForm({
       }
     }
 
-    router.push(mode === "signup" ? "/onboarding/role" : "/dashboard");
+    router.push(mode === "signup" ? "/onboarding/role" : nextPath ?? "/dashboard");
     router.refresh();
   }
 

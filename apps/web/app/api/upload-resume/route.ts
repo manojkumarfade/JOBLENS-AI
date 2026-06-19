@@ -1,13 +1,14 @@
 import { errorResponse, handleRouteError, json } from "@/lib/api";
-import { getAuthenticatedUser } from "@/lib/auth/session";
+import { requireApiRole } from "@/lib/auth/roles";
 import { parseResumeFile } from "@/lib/resume/parser";
 import { safeFilename } from "@/lib/security/sanitize";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
-    const user = await getAuthenticatedUser(request);
-    if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to upload resumes.", 401);
+    const auth = await requireApiRole(request, "candidate");
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
     const form = await request.formData();
     const file = form.get("file");
     if (!(file instanceof File)) return errorResponse("BAD_REQUEST", "A PDF, DOCX, or text resume file is required.", 400);

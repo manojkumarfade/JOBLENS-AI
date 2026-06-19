@@ -12,14 +12,14 @@ export function MarketingHeader() {
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
           <Link href="/">Home</Link>
-          <Link href="/dashboard/candidate">Browser Copilot</Link>
-          <Link href="/dashboard/recruiter">Recruiter AI</Link>
+          <Link href="/login?next=/dashboard/candidate">Browser Copilot</Link>
+          <Link href="/login?next=/dashboard/recruiter">Recruiter AI</Link>
           <Link href="/pricing">Pricing</Link>
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button asChild className="rounded-full bg-accent text-accent-foreground hover:bg-accent/85">
-            <Link href="/login">Get started</Link>
+            <Link href="/login?next=/dashboard">Get started</Link>
           </Button>
         </div>
       </div>
@@ -28,7 +28,7 @@ export function MarketingHeader() {
 }
 
 const footerGroups = [
-  { title: "Product", links: [["Browser Copilot", "/dashboard/candidate"], ["Recruiter AI", "/dashboard/recruiter"], ["Pricing", "/pricing"], ["Dashboard", "/dashboard"]] },
+  { title: "Product", links: [["Browser Copilot", "/login?next=/dashboard/candidate"], ["Recruiter AI", "/login?next=/dashboard/recruiter"], ["Pricing", "/pricing"], ["Dashboard", "/login?next=/dashboard"]] },
   { title: "Company", links: [["Privacy", "/privacy"], ["Terms", "/terms"], ["Contact", "mailto:hello@joblens.local"]] },
   { title: "Social", links: [["LinkedIn", "https://www.linkedin.com"], ["X", "https://x.com"]] },
   { title: "Legal", links: [["Privacy policy", "/privacy"], ["Terms of use", "/terms"]] }

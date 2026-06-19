@@ -13,6 +13,7 @@ function Popup() {
   const [voiceDebug, setVoiceDebug] = useState(false);
   const [message, setMessage] = useState("");
   const [syncing, setSyncing] = useState(false);
+  const extensionId = chrome.runtime.id;
 
   async function load() {
     const token = await getExtensionToken();
@@ -78,9 +79,13 @@ function Popup() {
     }
   }
 
+  async function copyExtensionId() {
+    await navigator.clipboard.writeText(extensionId);
+    setMessage("Extension ID copied. Paste it in the candidate dashboard before signing in.");
+  }
+
   function openExtensionLogin() {
-    const extensionId = encodeURIComponent(chrome.runtime.id);
-    chrome.tabs.create({ url: `${API_BASE_URL}/login?from=extension&extensionId=${extensionId}` });
+    chrome.tabs.create({ url: `${API_BASE_URL}/login?from=extension&extensionId=${encodeURIComponent(extensionId)}` });
   }
 
   useEffect(() => {
@@ -108,6 +113,13 @@ function Popup() {
       <section>
         <h2>Backend</h2>
         <p className="mono">{API_BASE_URL}</p>
+      </section>
+
+      <section>
+        <h2>Extension ID</h2>
+        <p className="mono">{extensionId}</p>
+        <p style={{ marginTop: 8 }}>Paste this ID into the candidate dashboard to link the extension securely.</p>
+        <button type="button" onClick={copyExtensionId} style={{ marginTop: 8 }}>Copy extension ID</button>
       </section>
 
       <section>
@@ -151,9 +163,6 @@ function Popup() {
         </button>
         <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard/candidate` })}>
           Open browser copilot
-        </button>
-        <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard/recruiter` })}>
-          Open recruiter dashboard
         </button>
         <button type="button" onClick={() => chrome.tabs.create({ url: `${API_BASE_URL}/dashboard/settings/voice` })}>
           Open AI settings

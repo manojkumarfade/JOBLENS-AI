@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { errorResponse, handleRouteError, json, readJson } from "@/lib/api";
-import { getAuthenticatedUser } from "@/lib/auth/session";
+import { handleRouteError, json, readJson } from "@/lib/api";
+import { requireApiRole } from "@/lib/auth/roles";
 import { parseCandidate } from "@/lib/recruiter/parser";
 import { candidateSchema } from "@/lib/recruiter/schemas";
 import type { ActivitySignals, CandidateProfile, CareerMetadata } from "@/lib/recruiter/types";
@@ -14,8 +14,9 @@ const jsonCandidateInputSchema = candidateSchema.extend({
 
 export async function POST(request: Request) {
   try {
-    const user = await getAuthenticatedUser(request);
-    if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to add recruiter candidates.", 401);
+    const auth = await requireApiRole(request, "recruiter");
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
 
     const contentType = request.headers.get("content-type") ?? "";
     const parsed = contentType.includes("multipart/form-data")

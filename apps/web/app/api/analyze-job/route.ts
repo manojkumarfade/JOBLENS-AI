@@ -3,7 +3,7 @@ import { z } from "zod";
 import { errorResponse, handleRouteError, json, readJson } from "@/lib/api";
 import { callBrainModel, ModelCredentialsError } from "@/lib/ai/modelRouter";
 import { parseModelJson } from "@/lib/ai/json";
-import { getAuthenticatedUser } from "@/lib/auth/session";
+import { requireApiRole } from "@/lib/auth/roles";
 import { activeResume, resumeSummary } from "@/lib/data/resumes";
 import { jobAnalysisPrompt, globalSystemPrompt, resumeComparisonPrompt } from "@/lib/prompts/templates";
 import { sanitizeHeadings, sanitizeJobText } from "@/lib/security/sanitize";
@@ -18,8 +18,9 @@ const schema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const user = await getAuthenticatedUser(request);
-    if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to analyze jobs.", 401);
+    const auth = await requireApiRole(request, "candidate");
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
     const supabase = createSupabaseServiceClient();
     const { data: memoryRow } = await supabase
       .from("user_ai_memory")

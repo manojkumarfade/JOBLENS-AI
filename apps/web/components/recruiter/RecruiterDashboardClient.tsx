@@ -56,7 +56,7 @@ type RankingApiResponse = {
 
 const fitLabels: Array<FitLabel | "all"> = ["all", "Excellent Fit", "Strong Fit", "Moderate Fit", "Weak Fit"];
 
-export function RecruiterDashboardClient() {
+export function RecruiterDashboardClient({ tutorialSeen = false }: { tutorialSeen?: boolean }) {
   const [job, setJob] = useState<JobForm>(() => ({
     title: demoJob.title ?? "",
     company: demoJob.company ?? "",
@@ -84,6 +84,7 @@ export function RecruiterDashboardClient() {
   const [experienceFilter, setExperienceFilter] = useState("all");
   const [labelFilter, setLabelFilter] = useState<(typeof fitLabels)[number]>("all");
   const [sortBy, setSortBy] = useState("score");
+  const [showTutorial, setShowTutorial] = useState(!tutorialSeen);
   const [manual, setManual] = useState<ManualCandidate>({
     name: "",
     email: "",
@@ -252,6 +253,15 @@ export function RecruiterDashboardClient() {
     setMessage("Shortlist summary copied.");
   }
 
+  async function dismissTutorial() {
+    setShowTutorial(false);
+    await fetch("/api/onboarding/tutorial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target: "recruiter" })
+    }).catch(() => null);
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-lg border bg-card p-5">
@@ -273,6 +283,23 @@ export function RecruiterDashboardClient() {
           This tool is an AI decision-support assistant. It should not be used as the sole basis for hiring decisions. Recruiters must review explanations and candidate evidence before making decisions.
         </div>
       </section>
+
+      {showTutorial ? (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader>
+            <CardTitle>Recruiter setup tutorial</CardTitle>
+            <CardDescription>Use this workspace to rank a candidate pool, not to manage your personal resume or extension.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <ol className="grid gap-2 text-muted-foreground">
+              <li>1. Analyze the job description to extract structured requirements.</li>
+              <li>2. Use demo candidates, add a manual candidate, or upload recruiter-owned resumes.</li>
+              <li>3. Rank candidates and review score evidence before shortlisting.</li>
+            </ol>
+            <Button type="button" onClick={dismissTutorial}>Got it</Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-4">
         {stats.map((stat) => {

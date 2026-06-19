@@ -1,11 +1,12 @@
 import { errorResponse, handleRouteError, json } from "@/lib/api";
-import { getAuthenticatedUser } from "@/lib/auth/session";
+import { requireApiRole } from "@/lib/auth/roles";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await getAuthenticatedUser(request);
-    if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to update resumes.", 401);
+    const auth = await requireApiRole(request, "candidate");
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
     const { id } = await params;
     const supabase = createSupabaseServiceClient();
     const { data: resume, error: readError } = await supabase

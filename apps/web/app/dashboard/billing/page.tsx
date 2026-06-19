@@ -1,13 +1,12 @@
 import { redirect } from "next/navigation";
 import { BillingClient } from "@/components/dashboard/BillingClient";
 import { getAuthenticatedUser } from "@/lib/auth/session";
-import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { getSubscription } from "@/lib/data/subscriptions";
 
 export default async function BillingPage() {
   const user = await getAuthenticatedUser();
   if (!user) redirect("/login");
-  const supabase = createSupabaseServiceClient();
-  const { data } = await supabase.from("subscriptions").select("*").eq("user_id", user.id).maybeSingle();
+  const data = await getSubscription(user.id);
 
   return (
     <div className="space-y-6">

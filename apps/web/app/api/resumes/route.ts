@@ -1,11 +1,12 @@
-import { errorResponse, handleRouteError, json } from "@/lib/api";
-import { getAuthenticatedUser } from "@/lib/auth/session";
+import { handleRouteError, json } from "@/lib/api";
+import { requireApiRole } from "@/lib/auth/roles";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   try {
-    const user = await getAuthenticatedUser(request);
-    if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to view resumes.", 401);
+    const auth = await requireApiRole(request, "candidate");
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
     const supabase = createSupabaseServiceClient();
     const { data, error } = await supabase
       .from("resumes")

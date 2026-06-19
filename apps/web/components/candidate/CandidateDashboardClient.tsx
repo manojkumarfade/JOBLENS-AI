@@ -6,6 +6,7 @@ import { Chrome, FileText, Mic, RefreshCw, Volume2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExtensionLinksCard } from "./ExtensionLinksCard";
 
 type ExtensionStatus = {
   checking: boolean;
@@ -31,14 +32,19 @@ type AnalysisView = {
 export function CandidateDashboardClient({
   resume,
   analyses,
-  backendUrl
+  backendUrl,
+  profile,
+  tutorialSeen
 }: {
   resume: ResumeStatus;
   analyses: AnalysisView[];
   backendUrl: string;
+  profile: { name: string | null; email: string | null; createdAt: string | null };
+  tutorialSeen: boolean;
 }) {
   const [extension, setExtension] = useState<ExtensionStatus>({ checking: true, installed: false, signedIn: false });
   const [voiceMessage, setVoiceMessage] = useState("");
+  const [showTutorial, setShowTutorial] = useState(!tutorialSeen);
 
   useEffect(() => {
     probeExtension();
@@ -77,6 +83,15 @@ export function CandidateDashboardClient({
     window.speechSynthesis.speak(utterance);
   }
 
+  async function dismissTutorial() {
+    setShowTutorial(false);
+    await fetch("/api/onboarding/tutorial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ target: "candidate" })
+    }).catch(() => null);
+  }
+
   return (
     <div className="space-y-6">
       <section>
@@ -86,6 +101,35 @@ export function CandidateDashboardClient({
           Connect the Chrome extension, upload your resume for job-fit analysis, then ask questions on any normal webpage.
         </p>
       </section>
+
+      {showTutorial ? (
+        <Card className="border-primary/30 bg-primary/5">
+          <CardHeader>
+            <CardTitle>First-time setup</CardTitle>
+            <CardDescription>Finish these steps once to use the Browser Copilot smoothly.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <ol className="grid gap-2 text-muted-foreground">
+              <li>1. Upload or confirm your active personal resume.</li>
+              <li>2. Copy your Chrome extension ID from the popup and link it below.</li>
+              <li>3. Open any webpage, click the floating button, and ask &quot;Summarize this page.&quot;</li>
+            </ol>
+            <Button type="button" onClick={dismissTutorial}>Got it</Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Registration Details</CardTitle>
+          <CardDescription>Candidate/general user profile used for personal resume and browser copilot flows.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 text-sm md:grid-cols-3">
+          <StatusLine label="Name" value={profile.name ?? "Not set"} />
+          <StatusLine label="Email" value={profile.email ?? "Not set"} />
+          <StatusLine label="Joined" value={profile.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "Unknown"} />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -126,6 +170,8 @@ export function CandidateDashboardClient({
         </Card>
       </div>
 
+      <ExtensionLinksCard />
+
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader>
@@ -134,7 +180,10 @@ export function CandidateDashboardClient({
           <CardContent className="space-y-3 text-sm">
             <StatusLine label="Mode" value="Browser Web Voice" />
             <p className="text-muted-foreground">If mic does not work, allow microphone permission for the current site and use Chrome or Edge.</p>
-            <Button type="button" variant="outline" onClick={testVoice}><Volume2 className="h-4 w-4" /> Test Voice Output</Button>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" onClick={testVoice}><Volume2 className="h-4 w-4" /> Test Voice Output</Button>
+              <Button asChild variant="outline"><Link href="/dashboard/settings/voice">AI/GPT Settings</Link></Button>
+            </div>
             {voiceMessage ? <p className="rounded-md border bg-muted p-2">{voiceMessage}</p> : null}
           </CardContent>
         </Card>

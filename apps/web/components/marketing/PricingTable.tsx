@@ -7,8 +7,8 @@ const plans = [
   {
     name: "Free",
     price: "Rs 0",
-    description: "Start with recruiter ranking, demo candidates, and core job analysis.",
-    features: ["Recruiter ranking dashboard", "Demo candidate pool", "Resume upload", "Saved analyses"]
+    description: "Start with Browser Copilot, personal resume upload, and core job-fit analysis.",
+    features: ["Browser Copilot dashboard", "Personal resume upload", "Saved analyses", "Recruiter module access for recruiter accounts"]
   },
   {
     name: "Pro",
@@ -54,7 +54,7 @@ export function PricingTable({ compact = false }: { compact?: boolean }) {
                 <RazorpayCheckoutButton period="monthly" className="w-full rounded-full">Pay Rs 400/month</RazorpayCheckoutButton>
               ) : (
                 <Button asChild variant="outline" className="w-full rounded-full">
-                  <Link href={plan.name === "Free" ? "/dashboard/recruiter" : "/dashboard/settings/voice"}>
+                  <Link href={plan.name === "Free" ? "/login?next=/dashboard" : "/login?next=/dashboard/settings/voice"}>
                     {plan.name === "Free" ? "Start free" : "Configure BYOK"}
                   </Link>
                 </Button>

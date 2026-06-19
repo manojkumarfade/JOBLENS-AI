@@ -5,6 +5,7 @@ import Link from "next/link";
 import { RefreshCw, Trash2 } from "lucide-react";
 import type { CredentialStatus, VoicePreferences } from "@joblens/shared";
 import { getModelLabel } from "@joblens/shared";
+import { ExtensionLinksCard } from "@/components/candidate/ExtensionLinksCard";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -234,27 +235,31 @@ export function SettingsClient({
         <CardHeader><CardTitle>Preferences</CardTitle></CardHeader>
         <CardContent className="flex flex-wrap items-center gap-3">
           <ThemeToggle />
-          <Button asChild variant="outline"><Link href="/dashboard/settings/voice">AI settings</Link></Button>
+          {role === "candidate" ? <Button asChild variant="outline"><Link href="/dashboard/settings/voice">AI settings</Link></Button> : null}
           <Button asChild variant="outline"><Link href="/dashboard/billing">Billing</Link></Button>
-          <Button asChild variant="outline"><Link href="/dashboard/resume">Manage resumes</Link></Button>
+          {role === "candidate" ? <Button asChild variant="outline"><Link href="/dashboard/resume">Manage resumes</Link></Button> : null}
         </CardContent>
       </Card>
 
+      {role === "candidate" ? <ExtensionLinksCard /> : null}
+
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card>
-          <CardHeader><CardTitle>Extension</CardTitle></CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <StatusLine label="Installed on this browser" value={extension.checking ? "Checking" : extension.installed ? "Connected" : "Not detected"} />
-            <StatusLine label="Extension auth" value={extension.installed ? (extension.signedIn ? "Signed in" : "Signed out") : "Unavailable"} />
-            <StatusLine label="Backend" value={backendOrigin || "Current dashboard"} />
-            <Button type="button" variant="outline" onClick={probeExtension}><RefreshCw className="h-4 w-4" /> Refresh status</Button>
-          </CardContent>
-        </Card>
+        {role === "candidate" ? (
+          <Card>
+            <CardHeader><CardTitle>Extension</CardTitle></CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <StatusLine label="Installed on this browser" value={extension.checking ? "Checking" : extension.installed ? "Connected" : "Not detected"} />
+              <StatusLine label="Extension auth" value={extension.installed ? (extension.signedIn ? "Signed in" : "Signed out") : "Unavailable"} />
+              <StatusLine label="Backend" value={backendOrigin || "Current dashboard"} />
+              <Button type="button" variant="outline" onClick={probeExtension}><RefreshCw className="h-4 w-4" /> Refresh status</Button>
+            </CardContent>
+          </Card>
+        ) : null}
 
         <Card>
-          <CardHeader><CardTitle>AI model and browser voice</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{role === "candidate" ? "AI model and browser voice" : "AI model"}</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
-            <StatusLine label="Voice mode" value={activeVoiceMode} />
+            {role === "candidate" ? <StatusLine label="Voice mode" value={activeVoiceMode} /> : null}
             <StatusLine label="Brain model" value={brain} />
             <StatusLine label="TypeGPT key" value={credentials?.typegptKeyConfigured ? "Configured" : "Platform default"} />
           </CardContent>
@@ -277,29 +282,31 @@ export function SettingsClient({
         </Card>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle>Resume data</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {resumes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No resumes uploaded.</p>
-          ) : (
-            resumes.map((resume) => (
-              <div key={resume.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
-                <div>
-                  <p className="font-medium">{resume.original_filename}</p>
-                  <p className="text-sm text-muted-foreground">Experience level: {resume.experience_level ?? "unknown"}</p>
+      {role === "candidate" ? (
+        <Card>
+          <CardHeader><CardTitle>Resume data</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {resumes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No resumes uploaded.</p>
+            ) : (
+              resumes.map((resume) => (
+                <div key={resume.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3">
+                  <div>
+                    <p className="font-medium">{resume.original_filename}</p>
+                    <p className="text-sm text-muted-foreground">Experience level: {resume.experience_level ?? "unknown"}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {resume.is_active ? <Badge>Active</Badge> : <Button variant="outline" onClick={() => setActive(resume.id)} disabled={workingId === resume.id}>Make active</Button>}
+                    <Button variant="outline" onClick={() => deleteResume(resume.id)} disabled={workingId === resume.id}>
+                      <Trash2 className="h-4 w-4" /> Delete
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {resume.is_active ? <Badge>Active</Badge> : <Button variant="outline" onClick={() => setActive(resume.id)} disabled={workingId === resume.id}>Make active</Button>}
-                  <Button variant="outline" onClick={() => deleteResume(resume.id)} disabled={workingId === resume.id}>
-                    <Trash2 className="h-4 w-4" /> Delete
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader><CardTitle>Privacy controls</CardTitle></CardHeader>

@@ -1,7 +1,14 @@
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { AnalysesClient } from "@/components/dashboard/AnalysesClient";
+import { getRoleForUser } from "@/lib/auth/roles";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 
-export default function AnalysesPage() {
+export default async function AnalysesPage() {
+  const user = await getAuthenticatedUser();
+  if (!user) redirect("/login");
+  const role = await getRoleForUser(user.id);
+  if (role !== "candidate") redirect("/dashboard/recruiter");
   return (
     <div className="space-y-6">
       <div>

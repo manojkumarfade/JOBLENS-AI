@@ -1,13 +1,14 @@
 import { voicePreferencesPatchSchema } from "@joblens/shared";
-import { errorResponse, handleRouteError, json, readJson } from "@/lib/api";
-import { getAuthenticatedUser } from "@/lib/auth/session";
+import { handleRouteError, json, readJson } from "@/lib/api";
+import { requireApiRole } from "@/lib/auth/roles";
 import { ensureVoicePreferences, mapVoicePreferences } from "@/lib/data/voice";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   try {
-    const user = await getAuthenticatedUser(request);
-    if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to manage voice preferences.", 401);
+    const auth = await requireApiRole(request, "candidate");
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
     const row = await ensureVoicePreferences(user.id);
     return json(await mapVoicePreferences(user.id, row));
   } catch (error) {
@@ -17,8 +18,9 @@ export async function GET(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const user = await getAuthenticatedUser(request);
-    if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to manage voice preferences.", 401);
+    const auth = await requireApiRole(request, "candidate");
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
     const body = voicePreferencesPatchSchema.parse(await readJson(request));
     const supabase = createSupabaseServiceClient();
     const { data, error } = await supabase

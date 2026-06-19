@@ -17,7 +17,9 @@ https://joblenswithai.vercel.app
 The product uses one Supabase Auth system. Users choose a role during onboarding:
 
 - `candidate`: default role for browser copilot, personal resume, and job-fit analysis
-- `recruiter`: routes to recruiter ranking by default, while still allowing browser copilot tools
+- `recruiter`: routes to recruiter ranking, jobs, candidate pools, and shortlisting tools
+
+Current role separation is strict in the app UI and protected APIs: candidate accounts use personal resume and Browser Copilot features, while recruiter accounts use recruiter candidate pool/ranking features.
 
 ## Apps And Packages
 
@@ -31,10 +33,11 @@ The product uses one Supabase Auth system. Users choose a role during onboarding
 1. Sign in with the shared web auth system.
 2. Open `/dashboard/candidate`.
 3. Install or load the Chrome extension.
-4. Open any normal webpage.
-5. Click the floating JobLens voice button.
-6. Ask: "Summarize this page", "Explain this page", or "What are the key points?"
-7. The extension extracts visible page text only after the click, sends the question and page context to the backend, and speaks the answer with browser speechSynthesis.
+4. Copy the Chrome extension ID from the popup and link it in the candidate dashboard.
+5. Open any normal webpage.
+6. Click the floating JobLens voice button.
+7. Ask: "Summarize this page", "Explain this page", or "What are the key points?"
+8. The extension extracts visible page text only after the click, sends the question and page context to the backend, and speaks the answer with browser speechSynthesis.
 
 Temporary live transcription stays in extension React state and is not stored by default.
 
@@ -111,6 +114,7 @@ supabase/migrations/202606160001_remove_livekit_gemini.sql
 supabase/migrations/202606160002_user_features.sql
 supabase/migrations/202606190001_recruiter_ranking.sql
 supabase/migrations/202606200001_profile_roles.sql
+supabase/migrations/202606200002_role_billing_extension_links.sql
 ```
 
 Important tables:
@@ -118,9 +122,12 @@ Important tables:
 - `profiles`: account profile and `user_role`
 - `resumes`: personal candidate/general user resumes
 - `jobs`, `candidates`, `candidate_rankings`: recruiter module data
+- `user_extension_links`: candidate-owned Chrome extension IDs allowed to exchange extension tokens
 - `voice_sessions`, `voice_transcripts`, `page_contexts`: saved voice/history data, used only when persistence is requested
 
 RLS policies keep authenticated users scoped to their own rows.
+
+Seed files do not create demo resumes or demo emails in the database. Recruiter demo candidates are local fallback data inside the recruiter workspace so evaluators can test ranking before persistence tables are applied.
 
 ## Security, Privacy, And Fairness
 
@@ -178,6 +185,7 @@ Keep server-only secrets in Vercel environment variables and never ship them to 
 
 - This is a proof of concept, not an ATS replacement or a final hiring decision system.
 - Browser speech recognition depends on Chrome/Edge Web Speech support and site-level microphone permission.
+- The unpacked Chrome extension must be linked by extension ID before it can receive an extension token.
 - Demo recruiter activity signals are synthetic.
 - AI model calls require a configured TypeGPT-compatible provider or platform key.
 - Ranking persistence requires the recruiter Supabase migration to be applied.

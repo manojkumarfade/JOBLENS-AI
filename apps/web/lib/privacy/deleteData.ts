@@ -12,6 +12,7 @@ export async function deleteAllUserData(userId: string) {
   await deleteOwnedRows("candidate_rankings", userId);
   await deleteOwnedRows("candidates", userId);
   await deleteOwnedRows("jobs", userId);
+  await deleteOwnedRows("user_extension_links", userId);
   await deleteOwnedRows("job_analyses", userId);
   await deleteOwnedRows("page_contexts", userId);
   await deleteOwnedRows("resumes", userId);

@@ -1,11 +1,11 @@
 "use client";
 
 import NumberFlow from "@number-flow/react";
+import Link from "next/link";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 import { RazorpayCheckoutButton } from "@/components/dashboard/RazorpayCheckoutButton";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export function PricingInteraction({
   proMonth,
@@ -39,19 +39,19 @@ export function PricingInteraction({
         />
       </div>
       <div className="relative space-y-3">
-        <PlanRow active={active === "free"} title="Free" subtitle="₹0/month" onClick={() => setActive("free")} />
+        <PlanRow active={active === "free"} title="Free" subtitle="Rs 0/month" onClick={() => setActive("free")} />
         <PlanRow
           active={active === "pro"}
           title="Pro"
           badge="Popular"
           subtitle={
             <span>
-              ₹<NumberFlow value={price} />/{period === "monthly" ? "month" : "year"}
+              Rs <NumberFlow value={price} />/{period === "monthly" ? "month" : "year"}
             </span>
           }
           onClick={() => setActive("pro")}
         />
-        <PlanRow active={active === "byok"} title="BYOK" subtitle="Free add-on · provider-billed" onClick={() => setActive("byok")} />
+        <PlanRow active={active === "byok"} title="BYOK" subtitle="Free add-on, provider-billed" onClick={() => setActive("byok")} />
       </div>
       <div className="mt-3">
         {active === "pro" ? (
@@ -60,11 +60,11 @@ export function PricingInteraction({
           </RazorpayCheckoutButton>
         ) : active === "byok" ? (
           <Button asChild className="w-full rounded-full" variant="outline">
-            <Link href="/dashboard/settings/voice">Configure BYOK</Link>
+            <Link href="/login?next=/dashboard/settings/voice">Configure BYOK</Link>
           </Button>
         ) : (
           <Button asChild className="w-full rounded-full" variant="outline">
-            <Link href="/install-extension">Start free</Link>
+            <Link href="/login?next=/dashboard">Start free</Link>
           </Button>
         )}
       </div>

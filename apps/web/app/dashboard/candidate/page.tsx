@@ -4,13 +4,16 @@ import { CandidateDashboardClient } from "@/components/candidate/CandidateDashbo
 import { getAuthenticatedUser } from "@/lib/auth/session";
 import { recentAnalyses } from "@/lib/data/analyses";
 import { activeResume } from "@/lib/data/resumes";
+import { getProfile } from "@/lib/data/users";
+import { hasSeenTutorial } from "@/lib/data/tutorials";
 
 export default async function CandidateDashboardPage() {
   const user = await getAuthenticatedUser();
   if (!user) redirect("/login");
-  const [resume, analyses, headerStore] = await Promise.all([
+  const [resume, analyses, profile, headerStore] = await Promise.all([
     activeResume(user.id).catch(() => null),
     recentAnalyses(user.id, 5).catch(() => []),
+    getProfile(user.id).catch(() => null),
     headers()
   ]);
   const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host") ?? "localhost:3000";
@@ -30,6 +33,12 @@ export default async function CandidateDashboardPage() {
       }
       analyses={analyses}
       backendUrl={`${proto}://${host}`}
+      profile={{
+        name: profile?.display_name ?? profile?.full_name ?? null,
+        email: profile?.email ?? user.email,
+        createdAt: profile?.created_at ?? null
+      }}
+      tutorialSeen={hasSeenTutorial(profile, "candidate")}
     />
   );
 }

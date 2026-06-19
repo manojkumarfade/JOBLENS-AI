@@ -1,4 +1,5 @@
 import { errorResponse, handleRouteError, json } from "@/lib/api";
+import { upsertSubscriptionCompat } from "@/lib/data/subscriptions";
 import { razorpayPortalLink, verifyRazorpaySignature } from "@/lib/payments/razorpay";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
@@ -20,21 +21,16 @@ export async function POST(request: Request) {
       const status = event.event === "subscription.cancelled" ? "cancelled" : "active";
       const customerId = typeof subscription?.customer_id === "string" ? subscription.customer_id : null;
       const supabase = createSupabaseServiceClient();
-      await supabase
-        .from("subscriptions")
-        .upsert(
-          {
-            user_id: userId,
-            plan,
-            status,
-            razorpay_customer_id: customerId,
-            razorpay_subscription_id: typeof subscription?.id === "string" ? subscription.id : null,
-            portal_url: razorpayPortalLink(customerId),
-            current_period_end:
-              typeof subscription?.current_end === "number" ? new Date(subscription.current_end * 1000).toISOString() : null
-          },
-          { onConflict: "user_id" }
-        );
+      await upsertSubscriptionCompat({
+        user_id: userId,
+        plan,
+        status,
+        razorpay_customer_id: customerId,
+        razorpay_subscription_id: typeof subscription?.id === "string" ? subscription.id : null,
+        portal_url: razorpayPortalLink(customerId),
+        current_period_end:
+          typeof subscription?.current_end === "number" ? new Date(subscription.current_end * 1000).toISOString() : null
+      });
       await supabase.from("profiles").update({ plan }).eq("id", userId);
     }
     return json({ ok: true });

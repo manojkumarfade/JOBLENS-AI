@@ -50,12 +50,9 @@ export default function HomePage() {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="rounded-full bg-accent text-accent-foreground hover:bg-accent/85">
-                <Link href="/login">
+                <Link href="/login?next=/dashboard">
                   Get Started <ArrowRight className="h-4 w-4" />
                 </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full">
-                <Link href="/dashboard/recruiter">Open Recruiter Demo</Link>
               </Button>
             </div>
           </div>
@@ -71,9 +68,9 @@ export default function HomePage() {
               </div>
               <div className="mt-5 space-y-3">
                 {[
-                  ["You", "Summarize this page.", "Listening"],
-                  ["JobLens", "This page explains how the product works and the main actions you can take next.", "Speaking"],
-                  ["You", "Am I fit for this job?", "Resume-aware"]
+                  ["Voice question", "Summarize this page.", "Listening"],
+                  ["Browser Copilot", "This page explains the main points and the next actions you can take.", "Speaking"],
+                  ["Job-fit mode", "Compare this job with my active resume.", "Resume-aware"]
                 ].map(([speaker, text, label]) => (
                   <div key={`${speaker}-${text}`} className="rounded-md border bg-background p-3">
                     <div className="flex items-start justify-between gap-3">
@@ -92,7 +89,7 @@ export default function HomePage() {
                   <p className="text-sm font-semibold">Recruiter AI module included</p>
                 </div>
                 <p className="mt-2 text-sm text-panel-dark-muted">
-                  Rank demo candidates with multi-signal scoring, explainable breakdowns, and human-review guardrails.
+                  Recruiter accounts can rank candidate pools with multi-signal scoring, explainable breakdowns, and human-review guardrails.
                 </p>
               </div>
             </div>
@@ -135,7 +132,7 @@ export default function HomePage() {
                 </p>
               </div>
               <Button asChild className="rounded-full bg-accent text-accent-foreground hover:bg-accent/85">
-                <Link href="/dashboard/candidate">Open Browser Copilot Dashboard</Link>
+                <Link href="/login?next=/dashboard/candidate">Open Browser Copilot Dashboard</Link>
               </Button>
             </div>
           </div>

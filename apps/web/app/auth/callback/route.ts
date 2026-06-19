@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { dashboardForRole, safeDashboardRedirect } from "@/lib/auth/roles";
 import { getProfile } from "@/lib/data/users";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -17,14 +18,17 @@ export async function GET(request: Request) {
       const profile = await getProfile(data.user.id).catch(() => null);
       const isExtensionReturn = safeNext.startsWith("/login") && safeNext.includes("from=extension");
       const needsName = !profile?.display_name && !profile?.full_name;
-      const needsRole = !profile?.hasRoleColumn && !isExtensionReturn;
+      const needsRole = false;
+      const role = profile?.user_role === "recruiter" ? "recruiter" : "candidate";
       if (needsName) {
         const onboardingUrl = new URL("/onboarding", url.origin);
         if (needsRole) onboardingUrl.searchParams.set("next", "/onboarding/role");
         return NextResponse.redirect(onboardingUrl);
       }
-      if (needsRole || safeNext.includes("firstRun=1")) {
+      if (needsRole || safeNext.includes("firstRun=1") || safeNext === "/onboarding/role") {
         redirectTo = new URL("/onboarding/role", url.origin);
+      } else if (!isExtensionReturn) {
+        redirectTo = new URL(safeDashboardRedirect(safeNext || dashboardForRole(role), role), url.origin);
       }
     }
   }

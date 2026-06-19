@@ -13,8 +13,14 @@ export async function POST(request: Request) {
     const user = await getAuthenticatedUser(request);
     if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to test API keys.", 401);
     const body = schema.parse(await readJson(request));
+    const started = Date.now();
     await validateTypeGptKey(body.apiKey);
-    return json({ ok: true });
+    return json({
+      ok: true,
+      provider: body.provider,
+      checkedAt: new Date().toISOString(),
+      latencyMs: Date.now() - started
+    });
   } catch (error) {
     if (error instanceof Error && /request failed|response did not|abort|API key/i.test(error.message)) {
       return errorResponse("INVALID_API_KEY", "The API key could not be validated.", 400);

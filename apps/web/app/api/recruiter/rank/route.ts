@@ -1,7 +1,7 @@
-import { errorResponse, handleRouteError, json, readJson } from "@/lib/api";
+import { handleRouteError, json, readJson } from "@/lib/api";
 import { parseModelJson } from "@/lib/ai/json";
 import { callBrainModel } from "@/lib/ai/modelRouter";
-import { getAuthenticatedUser } from "@/lib/auth/session";
+import { requireApiRole } from "@/lib/auth/roles";
 import { analyzeJobDeterministic, sanitizePlainText } from "@/lib/recruiter/analysis";
 import { parseCandidate } from "@/lib/recruiter/parser";
 import { rankCandidates } from "@/lib/recruiter/ranking";
@@ -13,8 +13,9 @@ import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
-    const user = await getAuthenticatedUser(request);
-    if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to rank recruiter candidates.", 401);
+    const auth = await requireApiRole(request, "recruiter");
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
 
     const body = rankRequestSchema.parse(await readJson(request));
     const job: RecruiterJobInput = {

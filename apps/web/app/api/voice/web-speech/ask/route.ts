@@ -2,7 +2,7 @@ import type { PageContextInput } from "@joblens/shared";
 import { webSpeechAskSchema } from "@joblens/shared";
 import { errorResponse, handleRouteError, json, readJson } from "@/lib/api";
 import { callBrainModel, ModelCredentialsError } from "@/lib/ai/modelRouter";
-import { getAuthenticatedUser } from "@/lib/auth/session";
+import { requireApiRole } from "@/lib/auth/roles";
 import { activeResume, resumeSummary } from "@/lib/data/resumes";
 import { sanitizeHeadings, sanitizeJobText } from "@/lib/security/sanitize";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
@@ -204,8 +204,9 @@ async function persistVoiceTurn(input: {
 
 export async function POST(request: Request) {
   try {
-    const user = await getAuthenticatedUser(request);
-    if (!user) return errorResponse("AUTH_REQUIRED", "Sign in to use voice.", 401);
+    const auth = await requireApiRole(request, "candidate");
+    if (!auth.ok) return auth.response;
+    const user = auth.user;
 
     const body = webSpeechAskSchema.parse(await readJson(request));
     const cleanText = sanitizeJobText(body.page.text);
