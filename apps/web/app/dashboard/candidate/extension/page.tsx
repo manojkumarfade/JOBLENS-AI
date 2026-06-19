@@ -4,14 +4,16 @@ import { ExtensionLinksCard } from "@/components/candidate/ExtensionLinksCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function CandidateExtensionPage() {
+export default async function CandidateExtensionPage({ searchParams }: { searchParams: Promise<{ extensionId?: string }> }) {
+  const params = await searchParams;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold">Browser Extension</h1>
         <p className="mt-2 text-muted-foreground">Use JobLens AI Browser Copilot on any normal webpage after you click the floating voice button.</p>
       </div>
-      <ExtensionLinksCard />
+      <ExtensionLinksCard initialExtensionId={params.extensionId ?? ""} />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><Chrome className="h-5 w-5" /> Setup</CardTitle></CardHeader>

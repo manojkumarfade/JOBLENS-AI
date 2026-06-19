@@ -17,9 +17,9 @@ type ExtensionLink = {
   revoked_at: string | null;
 };
 
-export function ExtensionLinksCard() {
+export function ExtensionLinksCard({ initialExtensionId = "" }: { initialExtensionId?: string }) {
   const [links, setLinks] = useState<ExtensionLink[]>([]);
-  const [extensionId, setExtensionId] = useState("");
+  const [extensionId, setExtensionId] = useState(initialExtensionId.toLowerCase());
   const [label, setLabel] = useState("My Chrome extension");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
@@ -37,6 +37,10 @@ export function ExtensionLinksCard() {
   useEffect(() => {
     void load();
   }, []);
+
+  useEffect(() => {
+    if (initialExtensionId) setExtensionId(initialExtensionId.toLowerCase());
+  }, [initialExtensionId]);
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

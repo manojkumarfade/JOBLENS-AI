@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     }
     const linked = await verifyExtensionLink(data.user.id, extensionId);
     if (!linked) {
-      return errorResponse("FORBIDDEN", "This extension ID is not linked. Copy the extension ID from the popup and add it in the candidate dashboard.", 403);
+      return errorResponse("EXTENSION_NOT_LINKED", "This extension ID is not linked yet. Link it in the candidate Browser Extension page, then sign in from the popup again.", 403);
     }
     const signed = await signExtensionToken({ userId: data.user.id, email: data.user.email });
     return json({ extensionToken: signed.token, expiresAt: signed.expiresAt });

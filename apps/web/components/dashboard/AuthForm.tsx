@@ -41,32 +41,48 @@ export function AuthForm({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [loginMethod, setLoginMethod] = useState<"unknown" | "password" | "google" | "new">(mode === "signup" ? "password" : "unknown");
+  const [extensionSessionChecked, setExtensionSessionChecked] = useState(!fromExtension);
+  const [hasExistingSession, setHasExistingSession] = useState(false);
+  const [needsExtensionLink, setNeedsExtensionLink] = useState(false);
+  const [extensionConnected, setExtensionConnected] = useState(false);
+  const extensionLinkHref = `/dashboard/candidate/extension${extensionId ? `?extensionId=${encodeURIComponent(extensionId)}` : ""}`;
 
   useEffect(() => {
     if (!fromExtension) return;
     supabase.auth.getSession().then(async ({ data }) => {
+      setHasExistingSession(Boolean(data.session?.access_token));
       if (data.session?.access_token) {
         await sendExtensionToken(data.session.access_token);
       }
+      setExtensionSessionChecked(true);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromExtension]);
 
   async function sendExtensionToken(accessToken: string) {
+    setNeedsExtensionLink(false);
+    setExtensionConnected(false);
     if (!extensionId) {
       setMessage("Missing extension ID. Reopen the JobLens extension popup and start sign-in again.");
       return true;
     }
-    const exchange = await fetch("/api/extension-auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ supabaseAccessToken: accessToken, extensionId })
-    });
+    let exchange: Response;
+    try {
+      exchange = await fetch("/api/extension-auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ supabaseAccessToken: accessToken, extensionId })
+      });
+    } catch {
+      setMessage("Could not reach JobLens extension auth. Check your internet connection and try again.");
+      return true;
+    }
     if (exchange.ok) {
       const body = await exchange.json();
       const deliveredDirectly = await sendTokenDirectlyToExtension(body.extensionToken, body.expiresAt);
       if (deliveredDirectly) {
         setMessage("You're signed in - reopen the JobLens extension popup.");
+        setExtensionConnected(true);
         return true;
       }
 
@@ -79,11 +95,29 @@ export function AuthForm({
         window.location.origin
       );
       setMessage("You're signed in - reopen the JobLens extension popup. If it still shows signed out, reload the unpacked extension.");
+      setExtensionConnected(true);
       return true;
     }
     const body = await exchange.json().catch(() => null);
+    if (body?.error?.code === "EXTENSION_NOT_LINKED") {
+      setNeedsExtensionLink(true);
+    }
     setMessage(body?.error?.message ?? "Could not link this extension. Add the extension ID in your candidate dashboard, then try again.");
     return true;
+  }
+
+  async function retryExtensionSignIn() {
+    setLoading(true);
+    setMessage("Checking your JobLens session...");
+    const { data } = await supabase.auth.getSession();
+    setHasExistingSession(Boolean(data.session?.access_token));
+    if (data.session?.access_token) {
+      await sendExtensionToken(data.session.access_token);
+    } else {
+      setMessage("Please sign in to JobLens first.");
+    }
+    setExtensionSessionChecked(true);
+    setLoading(false);
   }
 
   async function sendTokenDirectlyToExtension(extensionToken: string, expiresAt?: string) {
@@ -183,6 +217,52 @@ export function AuthForm({
 
     router.push(mode === "signup" ? "/onboarding/role" : nextPath ?? "/dashboard");
     router.refresh();
+  }
+
+  if (fromExtension && !extensionSessionChecked) {
+    return (
+      <Card className="mx-auto w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Connecting extension</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="rounded-md border bg-muted p-3 text-sm">Checking your JobLens login session...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (fromExtension && hasExistingSession) {
+    return (
+      <Card className="mx-auto w-full max-w-md">
+        <CardHeader>
+          <CardTitle>{extensionConnected ? "Extension connected" : "Finish extension setup"}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="rounded-md border bg-muted p-3 text-sm">
+            {message || "You are signed in to JobLens. Finish linking this Chrome extension to use voice on webpages."}
+          </p>
+          {needsExtensionLink ? (
+            <p className="text-sm text-muted-foreground">
+              You are not logged out. This extension ID just needs to be linked once in your candidate dashboard.
+            </p>
+          ) : null}
+          <div className="grid gap-2">
+            {needsExtensionLink ? (
+              <Button asChild className="w-full">
+                <a href={extensionLinkHref}>Link this extension ID</a>
+              </Button>
+            ) : null}
+            <Button type="button" variant={needsExtensionLink ? "outline" : "default"} className="w-full" onClick={retryExtensionSignIn} disabled={loading}>
+              {loading ? "Checking..." : extensionConnected ? "Send token again" : "Try extension sign-in again"}
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <a href={nextPath ?? "/dashboard/candidate"}>Open dashboard</a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
