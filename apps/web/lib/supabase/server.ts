@@ -43,6 +43,15 @@ export function createSupabaseServiceClient() {
   });
 }
 
+export function createSupabaseAuthClient() {
+  return createClient(requiredEnv("NEXT_PUBLIC_SUPABASE_URL"), requiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"), {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+}
+
 export function createSupabaseBearerClient(token: string) {
   return createClient(requiredEnv("NEXT_PUBLIC_SUPABASE_URL"), requiredEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"), {
     global: {

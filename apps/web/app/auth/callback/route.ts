@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { setFallbackSessionCookies } from "@/lib/auth/sessionCookies";
 import { dashboardForRole, safeDashboardRedirect } from "@/lib/auth/roles";
 import { getProfile } from "@/lib/data/users";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -12,7 +13,8 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createSupabaseServerClient();
-    await supabase.auth.exchangeCodeForSession(code);
+    const { data: sessionData } = await supabase.auth.exchangeCodeForSession(code);
+    if (sessionData.session) await setFallbackSessionCookies(sessionData.session);
     const { data } = await supabase.auth.getUser();
     if (data.user) {
       const profile = await getProfile(data.user.id).catch(() => null);

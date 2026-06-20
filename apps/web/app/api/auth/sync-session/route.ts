@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { errorResponse, handleRouteError, json, readJson } from "@/lib/api";
 import { dashboardForRole, getRoleForUser, safeDashboardRedirect } from "@/lib/auth/roles";
+import { setFallbackSessionCookies } from "@/lib/auth/sessionCookies";
 import { ensureProfile } from "@/lib/data/users";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
     if (error || !data.user) {
       return errorResponse("AUTH_REQUIRED", "Your login session could not be restored. Please sign in again.", 401);
     }
+    if (data.session) await setFallbackSessionCookies(data.session);
 
     await ensureProfile({
       id: data.user.id,

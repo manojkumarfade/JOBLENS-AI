@@ -1,5 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import {
+  ACCESS_COOKIE_MAX_AGE,
+  JOBLENS_ACCESS_COOKIE,
+  JOBLENS_REFRESH_COOKIE,
+  REFRESH_COOKIE_MAX_AGE,
+  authCookieOptions
+} from "@/lib/auth/sessionCookieConfig";
 
 type CookieToSet = {
   name: string;
@@ -27,6 +34,19 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  const { data } = await supabase.auth.getUser();
+  if (data.user) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session?.access_token) {
+      response.cookies.set(
+        JOBLENS_ACCESS_COOKIE,
+        sessionData.session.access_token,
+        authCookieOptions(Math.max(60, sessionData.session.expires_in ?? ACCESS_COOKIE_MAX_AGE))
+      );
+    }
+    if (sessionData.session?.refresh_token) {
+      response.cookies.set(JOBLENS_REFRESH_COOKIE, sessionData.session.refresh_token, authCookieOptions(REFRESH_COOKIE_MAX_AGE));
+    }
+  }
   return response;
 }
