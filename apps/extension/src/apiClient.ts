@@ -1,5 +1,14 @@
 import { API_BASE_URL } from "./config";
 
+export type BackendStatus = {
+  ok: true;
+  email: string | null;
+  role: "candidate";
+  extension: {
+    connected: true;
+  };
+};
+
 export async function getExtensionToken() {
   const stored = await chrome.storage.local.get(["extensionToken", "extensionTokenExpiresAt"]);
   if (typeof stored.extensionToken !== "string") return null;
@@ -38,20 +47,32 @@ export async function resetExtensionAccount() {
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = await getExtensionToken();
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init.headers ?? {})
-    }
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(init.headers ?? {})
+      }
+    });
+  } catch {
+    throw Object.assign(
+      new Error(`Could not reach JobLens backend at ${API_BASE_URL}. Reload the extension and check internet access.`),
+      { code: "BACKEND_UNREACHABLE" }
+    );
+  }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     const error = body.error ?? { code: "REQUEST_FAILED", message: "JobLens request failed." };
     throw Object.assign(new Error(error.message), error);
   }
   return body as T;
+}
+
+export async function getBackendStatus() {
+  return apiFetch<BackendStatus>("/api/extension/status");
 }
 
 export async function loadStartupState() {
@@ -63,11 +84,16 @@ export async function loadStartupState() {
     return { preferences: null, credentials: null, catalog };
   }
 
-  const [preferences, credentials, catalog] = await Promise.all([
+  let statusError: string | null = null;
+  const [status, preferences, credentials, catalog] = await Promise.all([
+    getBackendStatus().catch((error) => {
+      statusError = error instanceof Error ? error.message : "Could not verify backend connection.";
+      return null;
+    }),
     apiFetch<any>("/api/voice/preferences").catch(() => null),
     apiFetch<any>("/api/settings/model-credentials").catch(() => null),
     apiFetch<any>("/api/models/catalog").catch(() => null)
   ]);
-  await chrome.storage.local.set({ preferences, credentials, catalog, lastSyncedAt: new Date().toISOString() });
-  return { preferences, credentials, catalog };
+  await chrome.storage.local.set({ backendStatus: status, preferences, credentials, catalog, lastSyncedAt: new Date().toISOString() });
+  return { status, statusError, preferences, credentials, catalog };
 }

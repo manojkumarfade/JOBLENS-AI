@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { getModelLabel } from "@joblens/shared";
 import { API_BASE_URL } from "./config";
-import { getExtensionToken, getLinkedUserEmail, loadStartupState } from "./apiClient";
+import { getBackendStatus, getExtensionToken, getLinkedUserEmail, loadStartupState } from "./apiClient";
 import type { ExtensionMessage } from "./types/messages";
 import { speakTestVoice, VOICE_OPTIONS, type VoiceOption } from "./voice/webSpeechController";
 
@@ -25,7 +25,6 @@ function Popup() {
       getLinkedUserEmail(),
       chrome.storage.local.get(["voiceId", "voiceDebug", "popupTheme"])
     ]);
-    setSignedIn(Boolean(token));
     setLinkedEmail(email);
     if (stored.popupTheme === "dark" || stored.popupTheme === "light") setTheme(stored.popupTheme);
     if (typeof stored.voiceId === "string" && VOICE_OPTIONS.some((option) => option.id === stored.voiceId)) {
@@ -33,7 +32,18 @@ function Popup() {
     }
     setVoiceDebug(stored.voiceDebug === true);
     if (!token) {
+      setSignedIn(false);
       setModel("Platform Default (TypeGPT)");
+      return;
+    }
+    try {
+      const status = await getBackendStatus();
+      setSignedIn(true);
+      if (status.email) setLinkedEmail(status.email);
+    } catch (error) {
+      setSignedIn(false);
+      setModel("Platform Default (TypeGPT)");
+      setMessage(error instanceof Error ? error.message : "Could not verify the backend connection.");
       return;
     }
     const state = await loadStartupState().catch(() => null);
@@ -55,9 +65,12 @@ function Popup() {
   async function refresh() {
     setSyncing(true);
     setMessage("");
-    await chrome.runtime.sendMessage({ type: "SYNC_STARTUP_STATE" } satisfies ExtensionMessage).catch(() => null);
+    const response = await chrome.runtime.sendMessage({ type: "SYNC_STARTUP_STATE" } satisfies ExtensionMessage).catch((error) => ({
+      ok: false,
+      error: error instanceof Error ? error.message : "Could not contact the extension background worker."
+    }));
     await load();
-    setMessage("Status refreshed.");
+    setMessage(response?.ok ? "Backend connection verified." : response?.error ?? "Could not verify backend connection.");
     setSyncing(false);
   }
 
@@ -141,7 +154,7 @@ function Popup() {
       <section className="status">
         <div>
           <span className={signedIn ? "dot ok" : "dot"} />
-          <strong>{signedIn ? "Signed in" : "Not signed in"}</strong>
+          <strong>{signedIn ? "Backend connected" : "Not connected"}</strong>
         </div>
         <p>{linkedEmail ? `Linked account: ${linkedEmail}` : "Use the same Google account you use in the JobLens dashboard."}</p>
       </section>

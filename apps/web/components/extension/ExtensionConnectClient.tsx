@@ -53,6 +53,47 @@ export function ExtensionConnectClient({ extensionId, userEmail }: { extensionId
     });
   }
 
+  async function sendTokenViaContentScript(extensionToken: string, expiresAt?: string, email?: string | null) {
+    return new Promise<boolean>((resolve) => {
+      let settled = false;
+      const timer = window.setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          window.removeEventListener("message", onMessage);
+          setMessage("The extension did not confirm the connection. Reload the unpacked extension, refresh this page, and try again.");
+          resolve(false);
+        }
+      }, 2500);
+
+      function onMessage(event: MessageEvent) {
+        if (event.source !== window || event.origin !== window.location.origin) return;
+        const data = event.data as { type?: string; ok?: boolean; error?: string };
+        if (data.type !== "JOBLENS_EXTENSION_TOKEN_STORED") return;
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        window.removeEventListener("message", onMessage);
+        if (data.ok) {
+          resolve(true);
+          return;
+        }
+        setMessage(data.error ?? "The extension rejected this account. Reset the linked account from the popup and try again.");
+        resolve(false);
+      }
+
+      window.addEventListener("message", onMessage);
+      window.postMessage(
+        {
+          type: "JOBLENS_EXTENSION_TOKEN",
+          extensionToken,
+          expiresAt,
+          userEmail: email ?? null
+        },
+        window.location.origin
+      );
+    });
+  }
+
   async function connect() {
     setStatus("connecting");
     setMessage("Connecting this Chrome extension to your signed-in JobLens account...");
@@ -68,7 +109,11 @@ export function ExtensionConnectClient({ extensionId, userEmail }: { extensionId
       return;
     }
 
-    const delivered = await sendTokenDirectly(body.extensionToken, body.expiresAt, body.userEmail ?? userEmail);
+    let delivered = await sendTokenDirectly(body.extensionToken, body.expiresAt, body.userEmail ?? userEmail);
+    if (!delivered) {
+      setMessage("Direct Chrome messaging did not confirm. Trying the page bridge...");
+      delivered = await sendTokenViaContentScript(body.extensionToken, body.expiresAt, body.userEmail ?? userEmail);
+    }
     if (!delivered) {
       setStatus("error");
       return;

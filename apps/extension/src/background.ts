@@ -1,4 +1,4 @@
-import { clearExtensionToken, getExtensionToken, loadStartupState, resetExtensionAccount, setExtensionToken } from "./apiClient";
+import { apiFetch, clearExtensionToken, getExtensionToken, loadStartupState, resetExtensionAccount, setExtensionToken } from "./apiClient";
 import type { ExtensionMessage } from "./types/messages";
 import { resolveVoiceMode } from "./voice/modeResolver";
 
@@ -18,7 +18,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionMessage, sender, sendRes
         payload: { code: error.code ?? "EXTENSION_ERROR", message: error.message ?? "JobLens failed." }
       } satisfies ExtensionMessage);
     }
-    sendResponse({ ok: false });
+    sendResponse({ ok: false, code: error.code ?? "EXTENSION_ERROR", error: error.message ?? "JobLens failed." });
   });
   return true;
 });
@@ -98,13 +98,37 @@ async function handleMessage(message: ExtensionMessage, sender: chrome.runtime.M
     return { ok: true, ...state, signedIn: Boolean(await getExtensionToken()) };
   }
 
+  if (message.type === "VOICE_ANSWER_REQUEST") {
+    const data = await apiFetch("/api/voice/web-speech/ask", {
+      method: "POST",
+      body: JSON.stringify({
+        page: message.payload.page,
+        question: message.payload.question,
+        voiceSessionId: message.payload.voiceSessionId,
+        persistTranscript: false
+      })
+    });
+    return { ok: true, data };
+  }
+
   if (message.type === "PAGE_CONTEXT_READY") {
     if (!sender.tab?.id) return { ok: false };
     const state = await loadStartupState();
+    if (!state.status) {
+      await chrome.tabs.sendMessage(sender.tab.id, {
+        type: "ERROR",
+        payload: {
+          code: "BACKEND_UNREACHABLE",
+          message: state.statusError ?? "Could not verify JobLens backend connection. Open the extension popup and click Sync dashboard settings."
+        }
+      } satisfies ExtensionMessage);
+      return { ok: false };
+    }
+
     if (!state.preferences) {
       await chrome.tabs.sendMessage(sender.tab.id, {
         type: "ERROR",
-        payload: { code: "AUTH_REQUIRED", message: "Sign in from the JobLens extension popup." }
+        payload: { code: "SETTINGS_UNAVAILABLE", message: "Could not load voice settings. Open the extension popup and sync dashboard settings." }
       } satisfies ExtensionMessage);
       return { ok: false };
     }

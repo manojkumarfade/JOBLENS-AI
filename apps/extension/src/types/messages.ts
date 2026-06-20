@@ -9,4 +9,12 @@ export type ExtensionMessage =
   | { type: "CLEAR_EXTENSION_TOKEN" }
   | { type: "RESET_EXTENSION_ACCOUNT" }
   | { type: "SYNC_STARTUP_STATE" }
+  | {
+      type: "VOICE_ANSWER_REQUEST";
+      payload: {
+        page: ExtractedPageContext;
+        question: string;
+        voiceSessionId?: string;
+      };
+    }
   | { type: "ERROR"; payload: { code: string; message: string; fallbackMode?: string } };

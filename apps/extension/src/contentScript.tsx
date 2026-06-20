@@ -10,6 +10,7 @@ import {
   startConversation,
   type ConversationHandle,
   type ConversationState,
+  type VoiceAnswerResponse,
   type VoiceOption
 } from "./voice/webSpeechController";
 
@@ -151,7 +152,12 @@ function JobLensContentApp() {
           setErrorMessage(message);
         }
       },
-      { voiceId: settings.voiceId, voiceSessionId: settings.voiceSessionId, debug: settings.debug }
+      {
+        voiceId: settings.voiceId,
+        voiceSessionId: settings.voiceSessionId,
+        debug: settings.debug,
+        askBackend: askBackendThroughBackground
+      }
     );
   }
 
@@ -181,6 +187,27 @@ function JobLensContentApp() {
   );
 }
 
+async function askBackendThroughBackground(input: {
+  page: ExtractedPageContext;
+  question: string;
+  voiceSessionId?: string;
+}): Promise<VoiceAnswerResponse> {
+  const response = await chrome.runtime
+    .sendMessage({
+      type: "VOICE_ANSWER_REQUEST",
+      payload: input
+    } satisfies ExtensionMessage)
+    .catch((error) => {
+      throw new Error(error instanceof Error ? error.message : "Extension backend connection failed. Reload the extension and refresh this page.");
+    });
+
+  if (!response?.ok || !response.data) {
+    throw new Error(response?.error ?? "Backend connection failed. Open the extension popup and sync dashboard settings.");
+  }
+
+  return response.data as VoiceAnswerResponse;
+}
+
 function installTokenBridge() {
   const apiOrigin = getApiOrigin();
   if (!apiOrigin) return;
@@ -189,7 +216,31 @@ function installTokenBridge() {
     if (event.source !== window || event.origin !== apiOrigin) return;
     const data = event.data as { type?: string; extensionToken?: string; expiresAt?: string; userEmail?: string | null };
     if (data?.type === "JOBLENS_EXTENSION_TOKEN" && data.extensionToken) {
-      chrome.runtime.sendMessage({ type: "STORE_EXTENSION_TOKEN", payload: { token: data.extensionToken, expiresAt: data.expiresAt, userEmail: data.userEmail ?? null } } satisfies ExtensionMessage);
+      chrome.runtime
+        .sendMessage({
+          type: "STORE_EXTENSION_TOKEN",
+          payload: { token: data.extensionToken, expiresAt: data.expiresAt, userEmail: data.userEmail ?? null }
+        } satisfies ExtensionMessage)
+        .then((response) => {
+          window.postMessage(
+            {
+              type: "JOBLENS_EXTENSION_TOKEN_STORED",
+              ok: response?.ok === true,
+              error: response?.error
+            },
+            apiOrigin
+          );
+        })
+        .catch((error) => {
+          window.postMessage(
+            {
+              type: "JOBLENS_EXTENSION_TOKEN_STORED",
+              ok: false,
+              error: error instanceof Error ? error.message : "Extension context unavailable. Reload the extension and refresh this page."
+            },
+            apiOrigin
+          );
+        });
     }
     if (data?.type === "JOBLENS_EXTENSION_STATUS_REQUEST") {
       chrome.runtime

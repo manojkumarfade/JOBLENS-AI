@@ -1,5 +1,4 @@
 import type { ExtractedPageContext } from "@joblens/shared";
-import { apiFetch } from "../apiClient";
 
 export type ConversationState =
   | "idle"
@@ -30,6 +29,15 @@ export type ConversationCallbacks = {
 export type ConversationHandle = {
   stop: () => void;
   barge: () => void;
+};
+
+export type VoiceAnswerResponse = {
+  answer: string;
+  shouldSpeak: boolean;
+  sourceType?: string;
+  usedResume?: boolean;
+  voiceSessionId?: string | null;
+  modelMeta?: { model: string; provider: string; viaByok?: boolean };
 };
 
 type RecognitionCtor = new () => SpeechRecognitionLike;
@@ -104,6 +112,7 @@ export function startConversation(
     voiceId?: VoiceOption["id"];
     voiceSessionId?: string;
     debug?: boolean;
+    askBackend?: (input: { page: ExtractedPageContext; question: string; voiceSessionId?: string }) => Promise<VoiceAnswerResponse>;
   } = {}
 ): ConversationHandle {
   const { lang = "en-US", voiceId = "voice_a", debug = false } = opts;
@@ -271,17 +280,7 @@ export function startConversation(
     debugEvent("API request started");
 
     try {
-      const data = await apiFetch<{
-        answer: string;
-        shouldSpeak: boolean;
-        sourceType?: string;
-        usedResume?: boolean;
-        voiceSessionId?: string | null;
-        modelMeta?: { model: string; provider: string; viaByok?: boolean };
-      }>("/api/voice/web-speech/ask", {
-        method: "POST",
-        body: JSON.stringify({ page, question, voiceSessionId, persistTranscript: false })
-      });
+      const data = await (opts.askBackend ?? missingBackend)({ page, question, voiceSessionId });
 
       debugEvent("API answer received");
       if (data.voiceSessionId) {
@@ -347,6 +346,10 @@ export function startConversation(
       if (active) void beginListeningTurn();
     }
   };
+}
+
+function missingBackend(): Promise<VoiceAnswerResponse> {
+  return Promise.reject(new Error("Extension backend bridge is unavailable. Reload the extension and refresh this page."));
 }
 
 export function speakTestVoice(voiceId: VoiceOption["id"] = "voice_a") {
