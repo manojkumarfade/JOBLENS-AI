@@ -187,9 +187,9 @@ function installTokenBridge() {
 
   function receiveToken(event: MessageEvent) {
     if (event.source !== window || event.origin !== apiOrigin) return;
-    const data = event.data as { type?: string; extensionToken?: string; expiresAt?: string };
+    const data = event.data as { type?: string; extensionToken?: string; expiresAt?: string; userEmail?: string | null };
     if (data?.type === "JOBLENS_EXTENSION_TOKEN" && data.extensionToken) {
-      chrome.runtime.sendMessage({ type: "STORE_EXTENSION_TOKEN", payload: { token: data.extensionToken, expiresAt: data.expiresAt } } satisfies ExtensionMessage);
+      chrome.runtime.sendMessage({ type: "STORE_EXTENSION_TOKEN", payload: { token: data.extensionToken, expiresAt: data.expiresAt, userEmail: data.userEmail ?? null } } satisfies ExtensionMessage);
     }
     if (data?.type === "JOBLENS_EXTENSION_STATUS_REQUEST") {
       chrome.runtime

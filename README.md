@@ -33,7 +33,7 @@ Current role separation is strict in the app UI and protected APIs: candidate ac
 1. Sign in with the shared web auth system.
 2. Open `/dashboard/candidate`.
 3. Install or load the Chrome extension.
-4. Copy the Chrome extension ID from the popup and link it in the candidate dashboard.
+4. Open the extension popup and click **Sign in with dashboard Google account**.
 5. Open any normal webpage.
 6. Click the floating JobLens voice button.
 7. Ask: "Summarize this page", "Explain this page", or "What are the key points?"
@@ -101,6 +101,7 @@ AI is used when available for nuanced job understanding, explanation quality, co
 - `POST /api/recruiter/jobs/analyze`: analyzes a recruiter job description and persists a `jobs` row when the recruiter tables exist.
 - `POST /api/recruiter/candidates/parse`: parses manual candidate data or uploaded PDF/DOCX/text resumes into recruiter candidate profiles.
 - `POST /api/recruiter/rank`: ranks recruiter candidates, optionally enhances explanations with AI, and persists rankings when possible.
+- `POST /api/extension-connect`: connects the Chrome extension to the current signed-in candidate account and issues the extension token.
 
 Legacy routes for resume upload, saved analyses, settings, billing, and extension auth remain available to avoid breaking the existing deployed app.
 
@@ -115,6 +116,7 @@ supabase/migrations/202606160002_user_features.sql
 supabase/migrations/202606190001_recruiter_ranking.sql
 supabase/migrations/202606200001_profile_roles.sql
 supabase/migrations/202606200002_role_billing_extension_links.sql
+supabase/migrations/202606200003_extension_auto_connect_typegpt_cleanup.sql
 ```
 
 Important tables:
@@ -122,7 +124,7 @@ Important tables:
 - `profiles`: account profile and `user_role`
 - `resumes`: personal candidate/general user resumes
 - `jobs`, `candidates`, `candidate_rankings`: recruiter module data
-- `user_extension_links`: candidate-owned Chrome extension IDs allowed to exchange extension tokens
+- `user_extension_links`: candidate-owned Chrome extension connection records
 - `voice_sessions`, `voice_transcripts`, `page_contexts`: saved voice/history data, used only when persistence is requested
 
 RLS policies keep authenticated users scoped to their own rows.
@@ -185,7 +187,7 @@ Keep server-only secrets in Vercel environment variables and never ship them to 
 
 - This is a proof of concept, not an ATS replacement or a final hiring decision system.
 - Browser speech recognition depends on Chrome/Edge Web Speech support and site-level microphone permission.
-- The unpacked Chrome extension must be linked by extension ID before it can receive an extension token.
+- The unpacked Chrome extension connects from the popup using the current signed-in candidate dashboard account.
 - Demo recruiter activity signals are synthetic.
 - AI model calls require a configured TypeGPT-compatible provider or platform key.
 - Ranking persistence requires the recruiter Supabase migration to be applied.

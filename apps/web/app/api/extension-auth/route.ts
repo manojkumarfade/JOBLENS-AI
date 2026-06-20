@@ -2,7 +2,7 @@ import { z } from "zod";
 import { errorResponse, handleRouteError, json, readJson } from "@/lib/api";
 import { signExtensionToken } from "@/lib/auth/extensionToken";
 import { getRoleForUser } from "@/lib/auth/roles";
-import { isValidExtensionId, verifyExtensionLink } from "@/lib/data/extensionLinks";
+import { isValidExtensionId, upsertExtensionLink } from "@/lib/data/extensionLinks";
 import { createSupabaseBearerClient } from "@/lib/supabase/server";
 
 const schema = z.object({
@@ -23,12 +23,9 @@ export async function POST(request: Request) {
     if (role !== "candidate") {
       return errorResponse("FORBIDDEN", "Browser Copilot extension access is available for candidate accounts only.", 403);
     }
-    const linked = await verifyExtensionLink(data.user.id, extensionId);
-    if (!linked) {
-      return errorResponse("EXTENSION_NOT_LINKED", "This extension ID is not linked yet. Link it in the candidate Browser Extension page, then sign in from the popup again.", 403);
-    }
-    const signed = await signExtensionToken({ userId: data.user.id, email: data.user.email });
-    return json({ extensionToken: signed.token, expiresAt: signed.expiresAt });
+    await upsertExtensionLink(data.user.id, extensionId, "Chrome extension").catch(() => null);
+    const signed = await signExtensionToken({ userId: data.user.id, email: data.user.email, extensionId });
+    return json({ extensionToken: signed.token, expiresAt: signed.expiresAt, userEmail: data.user.email ?? null });
   } catch (error) {
     return handleRouteError(error);
   }

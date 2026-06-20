@@ -33,7 +33,7 @@ export async function listExtensionLinks(userId: string): Promise<ExtensionLink[
   return (data ?? []).map((row) => row as ExtensionLink);
 }
 
-export async function upsertExtensionLink(userId: string, extensionId: string, label?: string | null) {
+export async function upsertExtensionLink(userId: string, extensionId: string, label?: string | null): Promise<ExtensionLink | null> {
   const supabase = createSupabaseServiceClient();
   const normalized = normalizeExtensionId(extensionId);
   const { data, error } = await supabase
@@ -50,7 +50,10 @@ export async function upsertExtensionLink(userId: string, extensionId: string, l
     )
     .select("id,extension_id,label,is_active,last_used_at,created_at,revoked_at")
     .single();
-  if (error) throw error;
+  if (error) {
+    if (isMissingSupabaseSchemaError(error)) return null;
+    throw error;
+  }
   return data as ExtensionLink;
 }
 

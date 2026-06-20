@@ -10,12 +10,30 @@ export async function getExtensionToken() {
   return stored.extensionToken;
 }
 
-export async function setExtensionToken(token: string, expiresAt?: string) {
-  await chrome.storage.local.set({ extensionToken: token, extensionTokenExpiresAt: expiresAt ?? null });
+export async function getLinkedUserEmail() {
+  const stored = await chrome.storage.local.get(["linkedUserEmail"]);
+  return typeof stored.linkedUserEmail === "string" ? stored.linkedUserEmail : null;
+}
+
+export async function setExtensionToken(token: string, expiresAt?: string, userEmail?: string | null) {
+  const normalizedEmail = userEmail?.trim().toLowerCase() || null;
+  const linkedEmail = await getLinkedUserEmail();
+  if (linkedEmail && normalizedEmail && linkedEmail.toLowerCase() !== normalizedEmail) {
+    throw new Error(`This extension is already linked to ${linkedEmail}. Sign in with that Google account or reset the linked account from the popup.`);
+  }
+  await chrome.storage.local.set({
+    extensionToken: token,
+    extensionTokenExpiresAt: expiresAt ?? null,
+    ...(normalizedEmail ? { linkedUserEmail: normalizedEmail } : {})
+  });
 }
 
 export async function clearExtensionToken() {
   await chrome.storage.local.remove(["extensionToken", "extensionTokenExpiresAt", "preferences", "credentials"]);
+}
+
+export async function resetExtensionAccount() {
+  await chrome.storage.local.remove(["extensionToken", "extensionTokenExpiresAt", "preferences", "credentials", "linkedUserEmail"]);
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {

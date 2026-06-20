@@ -7,10 +7,11 @@ function signingKey() {
   return encoder.encode(requiredEnv("EXTENSION_AUTH_SECRET"));
 }
 
-export async function signExtensionToken(input: { userId: string; email?: string | null }) {
+export async function signExtensionToken(input: { userId: string; email?: string | null; extensionId?: string | null }) {
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
   const token = await new SignJWT({
     email: input.email ?? null,
+    extensionId: input.extensionId ?? null,
     scope: "extension"
   })
     .setProtectedHeader({ alg: "HS256" })

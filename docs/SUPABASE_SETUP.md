@@ -35,6 +35,7 @@ The app tolerates missing optional profile columns in code, but role onboarding 
    D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606190001_recruiter_ranking.sql
    D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606200001_profile_roles.sql
    D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606200002_role_billing_extension_links.sql
+   D:\Joblens Voice Assistant\JOBLENS\supabase\migrations\202606200003_extension_auto_connect_typegpt_cleanup.sql
    ```
 
 4. Go to **Project Settings -> API** and confirm your `.env.local` values match this same project.
@@ -100,7 +101,7 @@ Only persist these when the caller explicitly requests it.
    ```text
    https://joblenswithai.vercel.app
    https://joblenswithai.vercel.app/auth/callback
-   https://joblenswithai.vercel.app/login?from=extension
+   https://joblenswithai.vercel.app/extension/connect
    ```
 
 For local development, set:
@@ -155,11 +156,11 @@ from `chrome://extensions` with Developer mode enabled.
 After loading the extension:
 
 1. Open the extension popup.
-2. Copy the displayed Chrome extension ID.
-3. Paste it into the candidate dashboard or settings panel under linked extensions.
-4. Sign in from the extension popup.
+2. Click **Sign in with dashboard Google account**.
+3. If prompted, sign in with the same candidate/general-user Google account used on the dashboard.
+4. Open any normal webpage, click the floating JobLens button, and ask by voice.
 
-The backend only issues extension tokens for active extension IDs linked to the signed-in candidate user.
+The backend only issues extension tokens for candidate/general-user accounts. The extension remembers the connected account email and rejects a different Google account unless the user resets the linked account from the popup.
 
 ## Demo Data Note
 

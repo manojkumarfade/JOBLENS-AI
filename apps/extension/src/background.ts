@@ -1,4 +1,4 @@
-import { clearExtensionToken, getExtensionToken, loadStartupState, setExtensionToken } from "./apiClient";
+import { clearExtensionToken, getExtensionToken, loadStartupState, resetExtensionAccount, setExtensionToken } from "./apiClient";
 import type { ExtensionMessage } from "./types/messages";
 import { resolveVoiceMode } from "./voice/modeResolver";
 
@@ -35,8 +35,8 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   void broadcastAuthState(Boolean(changes.extensionToken.newValue));
 });
 
-async function storeExtensionToken(token: string, expiresAt?: string) {
-  await setExtensionToken(token, expiresAt);
+async function storeExtensionToken(token: string, expiresAt?: string, userEmail?: string | null) {
+  await setExtensionToken(token, expiresAt, userEmail);
   await loadStartupState();
   await broadcastAuthState(true);
   return { ok: true };
@@ -44,6 +44,12 @@ async function storeExtensionToken(token: string, expiresAt?: string) {
 
 async function removeExtensionToken() {
   await clearExtensionToken();
+  await broadcastAuthState(false);
+  return { ok: true };
+}
+
+async function resetLinkedAccount() {
+  await resetExtensionAccount();
   await broadcastAuthState(false);
   return { ok: true };
 }
@@ -63,9 +69,9 @@ async function broadcastAuthState(signedIn: boolean) {
 
 async function handleExternalMessage(message: unknown) {
   if (!message || typeof message !== "object") return { ok: false };
-  const incoming = message as { type?: string; payload?: { token?: string; expiresAt?: string } };
+  const incoming = message as { type?: string; payload?: { token?: string; expiresAt?: string; userEmail?: string | null } };
   if (incoming.type === "STORE_EXTENSION_TOKEN" && incoming.payload?.token) {
-    return storeExtensionToken(incoming.payload.token, incoming.payload.expiresAt);
+    return storeExtensionToken(incoming.payload.token, incoming.payload.expiresAt, incoming.payload.userEmail);
   }
   return { ok: false };
 }
@@ -76,11 +82,15 @@ async function handleMessage(message: ExtensionMessage, sender: chrome.runtime.M
   }
 
   if (message.type === "STORE_EXTENSION_TOKEN") {
-    return storeExtensionToken(message.payload.token, message.payload.expiresAt);
+    return storeExtensionToken(message.payload.token, message.payload.expiresAt, message.payload.userEmail);
   }
 
   if (message.type === "CLEAR_EXTENSION_TOKEN") {
     return removeExtensionToken();
+  }
+
+  if (message.type === "RESET_EXTENSION_ACCOUNT") {
+    return resetLinkedAccount();
   }
 
   if (message.type === "SYNC_STARTUP_STATE") {
@@ -115,11 +125,6 @@ async function handleMessage(message: ExtensionMessage, sender: chrome.runtime.M
       type: "ERROR",
       payload: { code: "VOICE_MODE_UNAVAILABLE", message: "Voice is unavailable in this browser. Use text input in the dashboard." }
     } satisfies ExtensionMessage);
-  }
-
-  if (message.type === "VOICE_MODE_CHANGED") {
-    await loadStartupState();
-    return { ok: true };
   }
 
   return { ok: true };

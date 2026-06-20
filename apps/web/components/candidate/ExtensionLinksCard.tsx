@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Link2, Trash2 } from "lucide-react";
+import { Link2, RefreshCw, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 
 type ExtensionLink = {
   id: string;
@@ -17,50 +16,23 @@ type ExtensionLink = {
   revoked_at: string | null;
 };
 
-export function ExtensionLinksCard({ initialExtensionId = "" }: { initialExtensionId?: string }) {
+export function ExtensionLinksCard() {
   const [links, setLinks] = useState<ExtensionLink[]>([]);
-  const [extensionId, setExtensionId] = useState(initialExtensionId.toLowerCase());
-  const [label, setLabel] = useState("My Chrome extension");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
   async function load() {
     setLoading(true);
     const res = await fetch("/api/extension-links");
     const body = await res.json().catch(() => null);
     if (res.ok) setLinks(body.links ?? []);
-    else setMessage(body?.error?.message ?? "Could not load linked extensions.");
+    else setMessage(body?.error?.message ?? "Could not load connected extensions.");
     setLoading(false);
   }
 
   useEffect(() => {
     void load();
   }, []);
-
-  useEffect(() => {
-    if (initialExtensionId) setExtensionId(initialExtensionId.toLowerCase());
-  }, [initialExtensionId]);
-
-  async function save(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaving(true);
-    setMessage("Saving extension ID...");
-    const res = await fetch("/api/extension-links", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ extensionId, label })
-    });
-    const body = await res.json().catch(() => null);
-    if (res.ok) {
-      setMessage("Extension linked. You can sign in from the extension popup now.");
-      setExtensionId("");
-      await load();
-    } else {
-      setMessage(body?.error?.message ?? "Could not link extension.");
-    }
-    setSaving(false);
-  }
 
   async function revoke(id: string) {
     setMessage("Revoking extension...");
@@ -70,25 +42,29 @@ export function ExtensionLinksCard({ initialExtensionId = "" }: { initialExtensi
       body: JSON.stringify({ id })
     });
     const body = await res.json().catch(() => null);
-    setMessage(res.ok ? "Extension revoked." : body?.error?.message ?? "Could not revoke extension.");
+    setMessage(res.ok ? "Extension revoked. Reset/sign out in the popup if it was already connected." : body?.error?.message ?? "Could not revoke extension.");
     if (res.ok) await load();
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Link2 className="h-5 w-5" /> Linked Extension IDs</CardTitle>
-        <CardDescription>Copy the Chrome extension ID from the popup, paste it here, then sign in from the extension.</CardDescription>
+        <CardTitle className="flex items-center gap-2"><Link2 className="h-5 w-5" /> Connected Extensions</CardTitle>
+        <CardDescription>Open the Chrome extension popup and sign in with the same Google account used for this dashboard. No manual ID copy/paste is required.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <form onSubmit={save} className="grid gap-3 md:grid-cols-[1fr_180px_auto]">
-          <Input value={extensionId} onChange={(event) => setExtensionId(event.target.value.toLowerCase())} placeholder="32-character extension ID" required />
-          <Input value={label} onChange={(event) => setLabel(event.target.value)} placeholder="Label" />
-          <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Link Extension"}</Button>
-        </form>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={load} disabled={loading}>
+            <RefreshCw className="h-4 w-4" /> {loading ? "Checking..." : "Refresh"}
+          </Button>
+        </div>
         <div className="grid gap-2">
-          {loading ? <p className="text-sm text-muted-foreground">Loading linked extensions...</p> : null}
-          {!loading && links.length === 0 ? <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">No extension linked yet.</p> : null}
+          {loading ? <p className="text-sm text-muted-foreground">Loading connected extensions...</p> : null}
+          {!loading && links.length === 0 ? (
+            <p className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
+              No extension connection recorded yet. Use the extension popup to connect this dashboard account.
+            </p>
+          ) : null}
           {links.map((link) => (
             <div key={link.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-3 text-sm">
               <div>

@@ -111,7 +111,7 @@ export function CandidateDashboardClient({
           <CardContent className="space-y-3 text-sm">
             <ol className="grid gap-2 text-muted-foreground">
               <li>1. Upload or confirm your active personal resume.</li>
-              <li>2. Copy your Chrome extension ID from the popup and link it below.</li>
+              <li>2. Open the extension popup and click &quot;Sign in with dashboard Google account.&quot;</li>
               <li>3. Open any webpage, click the floating button, and ask &quot;Summarize this page.&quot;</li>
             </ol>
             <Button type="button" onClick={dismissTutorial}>Got it</Button>

@@ -16,7 +16,6 @@ export async function GET(request: Request) {
     const { data } = await supabase.auth.getUser();
     if (data.user) {
       const profile = await getProfile(data.user.id).catch(() => null);
-      const isExtensionReturn = safeNext.startsWith("/login") && safeNext.includes("from=extension");
       const needsName = !profile?.display_name && !profile?.full_name;
       const needsRole = false;
       const role = profile?.user_role === "recruiter" ? "recruiter" : "candidate";
@@ -27,7 +26,9 @@ export async function GET(request: Request) {
       }
       if (needsRole || safeNext.includes("firstRun=1") || safeNext === "/onboarding/role") {
         redirectTo = new URL("/onboarding/role", url.origin);
-      } else if (!isExtensionReturn) {
+      } else if (safeNext.startsWith("/extension/connect")) {
+        redirectTo = new URL(safeNext, url.origin);
+      } else {
         redirectTo = new URL(safeDashboardRedirect(safeNext || dashboardForRole(role), role), url.origin);
       }
     }

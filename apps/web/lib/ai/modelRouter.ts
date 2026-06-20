@@ -12,6 +12,8 @@ type CredentialRow = {
   typegpt_key_configured: boolean;
 };
 
+const DEFAULT_TYPEGPT_MODEL = "openai/gpt-oss-20b";
+
 export class ModelCredentialsError extends Error {
   code = "MODEL_CREDENTIALS_MISSING" as const;
 }
@@ -37,9 +39,10 @@ export async function ensureCredentialRow(userId: string) {
 }
 
 export function credentialStatus(row: CredentialRow) {
+  const normalized = normalizeCredentialSelection(row);
   return {
-    brainProvider: row.brain_provider,
-    brainModel: row.brain_model,
+    brainProvider: normalized.provider,
+    brainModel: normalized.model,
     typegptKeyConfigured: row.typegpt_key_configured
   };
 }
@@ -95,13 +98,14 @@ function hasTypeGptCredential(row: CredentialRow, patch: Record<string, unknown>
 
 export async function resolveBrainModel(userId: string) {
   const row = await ensureCredentialRow(userId);
-  let provider = row.brain_provider;
-  let model = row.brain_model;
+  const normalized = normalizeCredentialSelection(row);
+  let provider = normalized.provider;
+  let model = normalized.model;
   let apiKey: string | null = null;
   let viaByok = false;
 
   if (provider === "platform") {
-    model = env("PLATFORM_TYPEGPT_DEFAULT_MODEL", "openai/gpt-oss-20b");
+    model = normalizeBrainModel(env("PLATFORM_TYPEGPT_DEFAULT_MODEL", DEFAULT_TYPEGPT_MODEL));
     const catalogModel = getBrainModel(model) ?? brainModels.find((item) => item.id === model);
     provider = catalogModel?.provider ?? "typegpt";
   }
@@ -114,6 +118,18 @@ export async function resolveBrainModel(userId: string) {
   if (!apiKey) throw new ModelCredentialsError(`No API key is configured for ${provider}.`);
 
   return { provider: provider as "typegpt", model, apiKey, viaByok };
+}
+
+function normalizeCredentialSelection(row: CredentialRow) {
+  const provider = row.brain_provider === "typegpt" || row.brain_provider === "platform" ? row.brain_provider : "platform";
+  return {
+    provider,
+    model: normalizeBrainModel(row.brain_model)
+  };
+}
+
+function normalizeBrainModel(model: string | null | undefined) {
+  return getBrainModel(model ?? "")?.id ?? DEFAULT_TYPEGPT_MODEL;
 }
 
 export async function callBrainModel(userId: string, messages: ChatMessage[], temperature = 0.3) {

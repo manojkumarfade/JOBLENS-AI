@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     if (!auth.ok) return auth.response;
     const body = createSchema.parse(await readJson(request));
     if (!isValidExtensionId(body.extensionId)) {
-      return errorResponse("VALIDATION", "Paste the 32-character Chrome extension ID from the extension popup.", 400);
+      return errorResponse("VALIDATION", "A valid Chrome extension ID is required.", 400);
     }
     const link = await upsertExtensionLink(auth.user.id, body.extensionId, body.label);
     return json({ ok: true, link });
