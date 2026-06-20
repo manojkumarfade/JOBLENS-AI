@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { RazorpayCheckoutButton } from "@/components/dashboard/RazorpayCheckoutButton";
+import { AuthAwareDashboardLink } from "@/components/marketing/AuthAwareDashboardLink";
 import { Button } from "@/components/ui/button";
 
 const plans = [
@@ -53,11 +54,14 @@ export function PricingTable({ compact = false }: { compact?: boolean }) {
               {plan.name === "Pro" ? (
                 <RazorpayCheckoutButton period="monthly" className="w-full rounded-full">Pay Rs 400/month</RazorpayCheckoutButton>
               ) : (
-                <Button asChild variant="outline" className="w-full rounded-full">
-                  <Link href={plan.name === "Free" ? "/login?next=/dashboard" : "/login?next=/dashboard/settings/voice"}>
-                    {plan.name === "Free" ? "Start free" : "Configure BYOK"}
-                  </Link>
-                </Button>
+                <AuthAwareDashboardLink
+                  href={plan.name === "Free" ? "/dashboard" : "/dashboard/settings/voice"}
+                  button
+                  variant="outline"
+                  className="w-full rounded-full"
+                >
+                  {plan.name === "Free" ? "Start free" : "Configure BYOK"}
+                </AuthAwareDashboardLink>
               )}
             </div>
           </div>

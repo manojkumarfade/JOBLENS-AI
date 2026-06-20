@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, Chrome, FileCheck2, LockKeyhole, Mic2, Sparkles } from "lucide-react";
+import { AuthAwareDashboardLink } from "@/components/marketing/AuthAwareDashboardLink";
 import { MarketingPage } from "@/components/marketing/MarketingShell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 const sections = [
@@ -49,11 +48,9 @@ export default function HomePage() {
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="rounded-full bg-accent text-accent-foreground hover:bg-accent/85">
-                <Link href="/login?next=/dashboard">
-                  Get Started <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
+              <AuthAwareDashboardLink href="/dashboard" button size="lg" className="rounded-full bg-accent text-accent-foreground hover:bg-accent/85">
+                Get Started <ArrowRight className="h-4 w-4" />
+              </AuthAwareDashboardLink>
             </div>
           </div>
 
@@ -131,9 +128,9 @@ export default function HomePage() {
                   General summaries work without a resume. Job-fit analysis uses your active resume when you have one. Recruiter ranking stays available from the dashboard.
                 </p>
               </div>
-              <Button asChild className="rounded-full bg-accent text-accent-foreground hover:bg-accent/85">
-                <Link href="/login?next=/dashboard/candidate">Open Browser Copilot Dashboard</Link>
-              </Button>
+              <AuthAwareDashboardLink href="/dashboard/candidate" button className="rounded-full bg-accent text-accent-foreground hover:bg-accent/85">
+                Open Browser Copilot Dashboard
+              </AuthAwareDashboardLink>
             </div>
           </div>
         </section>

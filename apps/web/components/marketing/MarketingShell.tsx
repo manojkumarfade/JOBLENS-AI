@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { AuthAwareDashboardLink } from "@/components/marketing/AuthAwareDashboardLink";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { FloatingVoiceDemo } from "@/components/marketing/FloatingVoiceDemo";
-import { Button } from "@/components/ui/button";
 
 export function MarketingHeader() {
   return (
@@ -12,15 +12,15 @@ export function MarketingHeader() {
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
           <Link href="/">Home</Link>
-          <Link href="/login?next=/dashboard/candidate">Browser Copilot</Link>
-          <Link href="/login?next=/dashboard/recruiter">Recruiter AI</Link>
+          <AuthAwareDashboardLink href="/dashboard/candidate">Browser Copilot</AuthAwareDashboardLink>
+          <AuthAwareDashboardLink href="/dashboard/recruiter">Recruiter AI</AuthAwareDashboardLink>
           <Link href="/pricing">Pricing</Link>
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Button asChild className="rounded-full bg-accent text-accent-foreground hover:bg-accent/85">
-            <Link href="/login?next=/dashboard">Get started</Link>
-          </Button>
+          <AuthAwareDashboardLink href="/dashboard" button className="rounded-full bg-accent text-accent-foreground hover:bg-accent/85">
+            Get started
+          </AuthAwareDashboardLink>
         </div>
       </div>
     </header>
@@ -50,7 +50,7 @@ export function MarketingFooter() {
               <p className="font-semibold text-foreground">{group.title}</p>
               <div className="mt-3 grid gap-2 text-muted-foreground">
                 {group.links.map(([label, href]) => (
-                  <Link key={label} href={href}>{label}</Link>
+                  <FooterLink key={label} label={label} href={href} />
                 ))}
               </div>
             </div>
@@ -59,6 +59,14 @@ export function MarketingFooter() {
       </div>
     </footer>
   );
+}
+
+function FooterLink({ label, href }: { label: string; href: string }) {
+  const dashboardTarget = href.startsWith("/login?next=") ? decodeURIComponent(href.replace("/login?next=", "")) : null;
+  if (dashboardTarget) {
+    return <AuthAwareDashboardLink href={dashboardTarget}>{label}</AuthAwareDashboardLink>;
+  }
+  return <Link href={href}>{label}</Link>;
 }
 
 export function MarketingPage({ children, showVoiceDemo = false }: { children: React.ReactNode; showVoiceDemo?: boolean }) {

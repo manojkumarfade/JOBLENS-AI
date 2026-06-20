@@ -15,9 +15,9 @@ async function getBrowserSession() {
   return data.session as BrowserSession | null;
 }
 
-async function syncServerSession(session: BrowserSession | null) {
-  if (!session?.access_token || !session.refresh_token) return;
-  if (lastSyncedAccessToken === session.access_token) return;
+async function syncServerSession(session: BrowserSession | null, next?: string) {
+  if (!session?.access_token || !session.refresh_token) return null;
+  if (lastSyncedAccessToken === session.access_token && !next) return null;
 
   const res = await fetch("/api/auth/sync-session", {
     method: "POST",
@@ -26,11 +26,13 @@ async function syncServerSession(session: BrowserSession | null) {
     body: JSON.stringify({
       accessToken: session.access_token,
       refreshToken: session.refresh_token,
-      next: window.location.pathname
+      next: next ?? window.location.pathname
     })
   }).catch(() => null);
 
-  if (res?.ok) lastSyncedAccessToken = session.access_token;
+  if (!res) return null;
+  if (res.ok) lastSyncedAccessToken = session.access_token;
+  return res.json().catch(() => null);
 }
 
 function withAuthHeader(init: RequestInit, token?: string) {
@@ -65,4 +67,11 @@ export async function syncBrowserSession() {
   const session = await getBrowserSession();
   await syncServerSession(session);
   return session;
+}
+
+export async function getSyncedDashboardRedirect(next: string) {
+  const session = await getBrowserSession();
+  if (!session?.access_token || !session.refresh_token) return null;
+  const body = await syncServerSession(session, next);
+  return typeof body?.redirectTo === "string" ? body.redirectTo : next;
 }

@@ -1,10 +1,9 @@
 "use client";
 
 import NumberFlow from "@number-flow/react";
-import Link from "next/link";
 import { useState } from "react";
 import { RazorpayCheckoutButton } from "@/components/dashboard/RazorpayCheckoutButton";
-import { Button } from "@/components/ui/button";
+import { AuthAwareDashboardLink } from "@/components/marketing/AuthAwareDashboardLink";
 import { cn } from "@/lib/utils";
 
 export function PricingInteraction({
@@ -59,13 +58,13 @@ export function PricingInteraction({
             Pay with Razorpay
           </RazorpayCheckoutButton>
         ) : active === "byok" ? (
-          <Button asChild className="w-full rounded-full" variant="outline">
-            <Link href="/login?next=/dashboard/settings/voice">Configure BYOK</Link>
-          </Button>
+          <AuthAwareDashboardLink href="/dashboard/settings/voice" button className="w-full rounded-full" variant="outline">
+            Configure BYOK
+          </AuthAwareDashboardLink>
         ) : (
-          <Button asChild className="w-full rounded-full" variant="outline">
-            <Link href="/login?next=/dashboard">Start free</Link>
-          </Button>
+          <AuthAwareDashboardLink href="/dashboard" button className="w-full rounded-full" variant="outline">
+            Start free
+          </AuthAwareDashboardLink>
         )}
       </div>
     </div>
