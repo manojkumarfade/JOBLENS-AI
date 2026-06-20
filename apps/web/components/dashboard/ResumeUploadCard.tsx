@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { authFetch } from "@/lib/auth/clientFetch";
 
 interface ResumeView {
   id: string;
@@ -26,7 +27,7 @@ export function ResumeUploadCard() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch("/api/resumes");
+    const res = await authFetch("/api/resumes");
     if (res.ok) setResumes((await res.json()).resumes);
     setLoading(false);
   }
@@ -40,7 +41,7 @@ export function ResumeUploadCard() {
     event.preventDefault();
     setMessage("Parsing your resume...");
     const form = new FormData(event.currentTarget);
-    const res = await fetch("/api/upload-resume", { method: "POST", body: form });
+    const res = await authFetch("/api/upload-resume", { method: "POST", body: form });
     const data = await res.json();
     setMessage(res.ok ? "Resume parsed and saved." : data.error?.message ?? "Upload failed.");
     if (res.ok) await load();
@@ -48,7 +49,7 @@ export function ResumeUploadCard() {
 
   async function setActive(id: string) {
     setActiveId(id);
-    const res = await fetch(`/api/resumes/${id}/active`, { method: "POST" });
+    const res = await authFetch(`/api/resumes/${id}/active`, { method: "POST" });
     setMessage(res.ok ? "Active resume updated." : "Could not update active resume.");
     if (res.ok) await load();
     setActiveId(null);
@@ -57,7 +58,7 @@ export function ResumeUploadCard() {
   async function deleteResume(id: string) {
     if (!confirm("Delete this resume and its stored file?")) return;
     setDeletingId(id);
-    const res = await fetch(`/api/resumes/${id}`, { method: "DELETE" });
+    const res = await authFetch(`/api/resumes/${id}`, { method: "DELETE" });
     const data = await res.json().catch(() => null);
     setMessage(res.ok ? "Resume deleted." : data?.error?.message ?? "Could not delete resume.");
     if (res.ok) await load();

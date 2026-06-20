@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnalysisCard, type AnalysisView } from "@/components/dashboard/AnalysisCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { authFetch } from "@/lib/auth/clientFetch";
 
 const PAGE_SIZE = 10;
 
@@ -17,7 +18,7 @@ export function AnalysesClient() {
   async function loadMore(offset = nextOffset) {
     if (offset === null || loading) return;
     setLoading(true);
-    const res = await fetch(`/api/analyses?limit=${PAGE_SIZE}&offset=${offset}`);
+    const res = await authFetch(`/api/analyses?limit=${PAGE_SIZE}&offset=${offset}`);
     if (res.ok) {
       const data = await res.json();
       setAnalyses((current) => {
@@ -48,7 +49,7 @@ export function AnalysesClient() {
   });
 
   async function remove(id: string) {
-    await fetch(`/api/analyses/${id}`, { method: "DELETE" });
+    await authFetch(`/api/analyses/${id}`, { method: "DELETE" });
     setAnalyses((current) => current.filter((analysis) => analysis.id !== id));
     setSelected((current) => (current?.id === id ? null : current));
   }

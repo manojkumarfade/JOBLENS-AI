@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
+import { DashboardSessionBridge } from "@/components/dashboard/DashboardSessionBridge";
 import { SupabaseSetupNotice } from "@/components/dashboard/SupabaseSetupNotice";
 import { getAuthenticatedUser } from "@/lib/auth/session";
 import { getProfile } from "@/lib/data/users";
@@ -20,6 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen bg-background">
+      <DashboardSessionBridge />
       <DashboardNav plan={profile?.plan ?? "free"} role={profile?.user_role ?? "candidate"} />
       <main className="pb-20 md:ml-64 md:pb-0">
         <div className="mx-auto max-w-6xl px-4 py-8">{children}</div>

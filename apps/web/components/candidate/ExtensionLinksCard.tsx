@@ -5,6 +5,7 @@ import { Link2, RefreshCw, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { authFetch } from "@/lib/auth/clientFetch";
 
 type ExtensionLink = {
   id: string;
@@ -23,7 +24,7 @@ export function ExtensionLinksCard() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch("/api/extension-links");
+    const res = await authFetch("/api/extension-links");
     const body = await res.json().catch(() => null);
     if (res.ok) setLinks(body.links ?? []);
     else setMessage(body?.error?.message ?? "Could not load connected extensions.");
@@ -36,7 +37,7 @@ export function ExtensionLinksCard() {
 
   async function revoke(id: string) {
     setMessage("Revoking extension...");
-    const res = await fetch("/api/extension-links", {
+    const res = await authFetch("/api/extension-links", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id })

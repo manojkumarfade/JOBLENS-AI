@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { authFetch } from "@/lib/auth/clientFetch";
 
 export function VoiceSettingsForm() {
   const [preferences, setPreferences] = useState<VoicePreferences | null>(null);
@@ -24,9 +25,9 @@ export function VoiceSettingsForm() {
 
   async function load() {
     const [prefsRes, credsRes, catalogRes] = await Promise.all([
-      fetch("/api/voice/preferences"),
-      fetch("/api/settings/model-credentials"),
-      fetch("/api/models/catalog")
+      authFetch("/api/voice/preferences"),
+      authFetch("/api/settings/model-credentials"),
+      authFetch("/api/models/catalog")
     ]);
     if (prefsRes.ok) setPreferences(await prefsRes.json());
     if (credsRes.ok) setCredentials(await credsRes.json());
@@ -49,12 +50,12 @@ export function VoiceSettingsForm() {
   async function save() {
     setMessage("Saving settings...");
     const [prefsRes, credsRes] = await Promise.all([
-      fetch("/api/voice/preferences", {
+      authFetch("/api/voice/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...currentPreferences, defaultVoiceMode: "web_speech" })
       }),
-      fetch("/api/settings/model-credentials", {
+      authFetch("/api/settings/model-credentials", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -82,7 +83,7 @@ export function VoiceSettingsForm() {
     }
     setTestingKey(true);
     setMessage("Testing TypeGPT key...");
-    const res = await fetch("/api/settings/model-credentials/test", {
+    const res = await authFetch("/api/settings/model-credentials/test", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ provider: "typegpt", apiKey: typegptApiKey })

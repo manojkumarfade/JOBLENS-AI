@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { authFetch } from "@/lib/auth/clientFetch";
 
 declare global {
   interface Window {
@@ -43,7 +44,7 @@ export function RazorpayCheckoutButton({
       return;
     }
 
-    const res = await fetch("/api/billing/checkout", {
+    const res = await authFetch("/api/billing/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ period })
@@ -68,7 +69,7 @@ export function RazorpayCheckoutButton({
         razorpay_order_id: string;
         razorpay_signature: string;
       }) => {
-        const verify = await fetch("/api/billing/verify", {
+        const verify = await authFetch("/api/billing/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

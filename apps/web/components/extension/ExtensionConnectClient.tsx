@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { authFetch } from "@/lib/auth/clientFetch";
 
 type ChromeRuntimeBridge = {
   runtime?: {
@@ -55,7 +56,7 @@ export function ExtensionConnectClient({ extensionId, userEmail }: { extensionId
   async function connect() {
     setStatus("connecting");
     setMessage("Connecting this Chrome extension to your signed-in JobLens account...");
-    const res = await fetch("/api/extension-connect", {
+    const res = await authFetch("/api/extension-connect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ extensionId })

@@ -6,6 +6,7 @@ import { Chrome, FileText, Mic, RefreshCw, Volume2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { authFetch } from "@/lib/auth/clientFetch";
 import { ExtensionLinksCard } from "./ExtensionLinksCard";
 
 type ExtensionStatus = {
@@ -85,7 +86,7 @@ export function CandidateDashboardClient({
 
   async function dismissTutorial() {
     setShowTutorial(false);
-    await fetch("/api/onboarding/tutorial", {
+    await authFetch("/api/onboarding/tutorial", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ target: "candidate" })

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { BriefcaseBusiness, Chrome, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { authFetch } from "@/lib/auth/clientFetch";
 
 type Role = "candidate" | "recruiter";
 
@@ -33,7 +34,7 @@ export default function RoleOnboardingPage() {
   async function chooseRole(role: Role) {
     setSavingRole(role);
     setMessage("");
-    const res = await fetch("/api/settings/profile", {
+    const res = await authFetch("/api/settings/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_role: role })

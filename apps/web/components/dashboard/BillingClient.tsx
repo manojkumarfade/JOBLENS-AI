@@ -5,6 +5,7 @@ import Link from "next/link";
 import { RazorpayCheckoutButton } from "@/components/dashboard/RazorpayCheckoutButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { authFetch } from "@/lib/auth/clientFetch";
 
 export function BillingClient({ plan, renewalDate, portalUrl }: { plan?: string | null; renewalDate?: string | null; portalUrl?: string | null }) {
   const [message, setMessage] = useState("");
@@ -14,7 +15,7 @@ export function BillingClient({ plan, renewalDate, portalUrl }: { plan?: string 
       window.location.assign(portalUrl);
       return;
     }
-    const res = await fetch("/api/billing/portal", { method: "POST" });
+    const res = await authFetch("/api/billing/portal", { method: "POST" });
     const data = await res.json();
     if (data.url) window.location.assign(data.url);
     else setMessage("Subscription portal is not configured yet.");

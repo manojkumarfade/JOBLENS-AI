@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { authFetch } from "@/lib/auth/clientFetch";
 
 type JobForm = {
   title: string;
@@ -137,7 +138,7 @@ export function RecruiterDashboardClient({ tutorialSeen = false }: { tutorialSee
     setAnalyzing(true);
     setMessage("Analyzing job requirements...");
     setWarning("");
-    const res = await fetch("/api/recruiter/jobs/analyze", {
+    const res = await authFetch("/api/recruiter/jobs/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(toJobPayload(job))
@@ -159,7 +160,7 @@ export function RecruiterDashboardClient({ tutorialSeen = false }: { tutorialSee
     setMessage("Ranking candidates...");
     setWarning("");
     const payload = toJobPayload(job);
-    const res = await fetch("/api/recruiter/rank", {
+    const res = await authFetch("/api/recruiter/rank", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -189,7 +190,7 @@ export function RecruiterDashboardClient({ tutorialSeen = false }: { tutorialSee
     if (!(form.get("file") instanceof File)) return;
     setUploading(true);
     setMessage("Parsing candidate resume...");
-    const res = await fetch("/api/recruiter/candidates/parse", { method: "POST", body: form });
+    const res = await authFetch("/api/recruiter/candidates/parse", { method: "POST", body: form });
     const data = await res.json().catch(() => null);
     if (res.ok) {
       setCandidates((current) => [data.candidate, ...current]);
@@ -205,7 +206,7 @@ export function RecruiterDashboardClient({ tutorialSeen = false }: { tutorialSee
   async function addManualCandidate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("Adding candidate...");
-    const res = await fetch("/api/recruiter/candidates/parse", {
+    const res = await authFetch("/api/recruiter/candidates/parse", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -255,7 +256,7 @@ export function RecruiterDashboardClient({ tutorialSeen = false }: { tutorialSee
 
   async function dismissTutorial() {
     setShowTutorial(false);
-    await fetch("/api/onboarding/tutorial", {
+    await authFetch("/api/onboarding/tutorial", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ target: "recruiter" })

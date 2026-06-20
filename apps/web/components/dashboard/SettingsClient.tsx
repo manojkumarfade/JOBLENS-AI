@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { authFetch } from "@/lib/auth/clientFetch";
 
 type ExtensionStatus = {
   checking: boolean;
@@ -75,10 +76,10 @@ export function SettingsClient({
 
   async function load() {
     const [prefsRes, credsRes, resumesRes, billingRes] = await Promise.all([
-      fetch("/api/voice/preferences"),
-      fetch("/api/settings/model-credentials"),
-      fetch("/api/resumes"),
-      fetch("/api/billing/status")
+      authFetch("/api/voice/preferences"),
+      authFetch("/api/settings/model-credentials"),
+      authFetch("/api/resumes"),
+      authFetch("/api/billing/status")
     ]);
     if (prefsRes.ok) setPreferences(await prefsRes.json());
     if (credsRes.ok) setCredentials(await credsRes.json());
@@ -87,7 +88,7 @@ export function SettingsClient({
   }
 
   async function loadMemory() {
-    const res = await fetch("/api/settings/memory");
+    const res = await authFetch("/api/settings/memory");
     if (res.ok) {
       const data = await res.json();
       setMemory(data.memory_text ?? "");
@@ -117,7 +118,7 @@ export function SettingsClient({
 
   async function saveProfile() {
     setProfileSaving(true);
-    const res = await fetch("/api/settings/profile", {
+    const res = await authFetch("/api/settings/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ display_name: displayName, username: username || undefined, user_role: role })
@@ -129,7 +130,7 @@ export function SettingsClient({
 
   async function saveMemory() {
     setMemorySaving(true);
-    const res = await fetch("/api/settings/memory", {
+    const res = await authFetch("/api/settings/memory", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ memory_text: memory })
@@ -140,20 +141,20 @@ export function SettingsClient({
 
   async function deleteData() {
     if (!confirm("Delete analyses, transcripts, page contexts, credentials, voice sessions, and resume files?")) return;
-    const res = await fetch("/api/privacy/delete-data", { method: "POST" });
+    const res = await authFetch("/api/privacy/delete-data", { method: "POST" });
     setMessage(res.ok ? "Your JobLens data was deleted." : "Could not delete data.");
     if (res.ok) await load();
   }
 
   async function deleteAccount() {
     if (!confirm("Delete your account and all associated data?")) return;
-    const res = await fetch("/api/privacy/delete-account", { method: "POST" });
+    const res = await authFetch("/api/privacy/delete-account", { method: "POST" });
     setMessage(res.ok ? "Account deletion requested." : "Could not delete account.");
   }
 
   async function setActive(id: string) {
     setWorkingId(id);
-    const res = await fetch(`/api/resumes/${id}/active`, { method: "POST" });
+    const res = await authFetch(`/api/resumes/${id}/active`, { method: "POST" });
     setMessage(res.ok ? "Active resume updated." : "Could not update active resume.");
     await load();
     setWorkingId(null);
@@ -163,7 +164,7 @@ export function SettingsClient({
     if (!confirm("Delete this resume and its stored file?")) return;
     setWorkingId(id);
     setResumes((prev) => prev.filter((resume) => resume.id !== id));
-    const res = await fetch(`/api/resumes/${id}`, { method: "DELETE" });
+    const res = await authFetch(`/api/resumes/${id}`, { method: "DELETE" });
     const body = await res.json().catch(() => null);
     if (!res.ok) {
       setMessage(body?.error?.message ?? "Could not delete resume.");

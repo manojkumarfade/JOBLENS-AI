@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { authFetch } from "@/lib/auth/clientFetch";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function OnboardingPage() {
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-    const res = await fetch("/api/settings/profile", {
+    const res = await authFetch("/api/settings/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ display_name: displayName })
